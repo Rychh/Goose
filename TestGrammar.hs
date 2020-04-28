@@ -7,11 +7,11 @@ import System.Environment ( getArgs, getProgName )
 import System.Exit ( exitFailure, exitSuccess )
 import Control.Monad (when)
 
-import LexGramatyka
-import ParGramatyka
-import SkelGramatyka
-import PrintGramatyka
-import AbsGramatyka
+import LexGrammar
+import ParGrammar
+import SkelGrammar
+import PrintGrammar
+import AbsGrammar
 
 
 

@@ -6,12 +6,12 @@
 
 # Default goal.
 
-all : TestGramatyka
+all : TestGrammar
 
 # Rules for building the parser.
 
-ErrM.hs LexGramatyka.x PrintGramatyka.hs ParGramatyka.y TestGramatyka.hs : Gramatyka.cf
-	bnfc --haskell Gramatyka.cf
+ErrM.hs LexGrammar.x PrintGrammar.hs ParGrammar.y TestGrammar.hs : Grammar.cf
+	bnfc --haskell Grammar.cf
 
 %.hs : %.y
 	happy --ghc --coerce --array --info $<
@@ -19,7 +19,7 @@ ErrM.hs LexGramatyka.x PrintGramatyka.hs ParGramatyka.y TestGramatyka.hs : Grama
 %.hs : %.x
 	alex --ghc $<
 
-TestGramatyka : TestGramatyka.hs ErrM.hs LexGramatyka.hs ParGramatyka.hs PrintGramatyka.hs
+TestGrammar : TestGrammar.hs ErrM.hs LexGrammar.hs ParGrammar.hs PrintGrammar.hs
 	ghc --make $< -o $@
 
 # Rules for cleaning generated files.
@@ -28,7 +28,7 @@ clean :
 	-rm -f *.hi *.o *.log *.aux *.dvi
 
 distclean : clean
-	-rm -f AbsGramatyka.hs AbsGramatyka.hs.bak ComposOp.hs ComposOp.hs.bak DocGramatyka.txt DocGramatyka.txt.bak ErrM.hs ErrM.hs.bak LayoutGramatyka.hs LayoutGramatyka.hs.bak LexGramatyka.x LexGramatyka.x.bak ParGramatyka.y ParGramatyka.y.bak PrintGramatyka.hs PrintGramatyka.hs.bak SharedString.hs SharedString.hs.bak SkelGramatyka.hs SkelGramatyka.hs.bak TestGramatyka.hs TestGramatyka.hs.bak XMLGramatyka.hs XMLGramatyka.hs.bak ASTGramatyka.agda ASTGramatyka.agda.bak ParserGramatyka.agda ParserGramatyka.agda.bak IOLib.agda IOLib.agda.bak Main.agda Main.agda.bak Gramatyka.dtd Gramatyka.dtd.bak TestGramatyka LexGramatyka.hs ParGramatyka.hs ParGramatyka.info ParDataGramatyka.hs Makefile
+	-rm -f AbsGrammar.hs AbsGrammar.hs.bak ComposOp.hs ComposOp.hs.bak DocGrammar.txt DocGrammar.txt.bak ErrM.hs ErrM.hs.bak LayoutGrammar.hs LayoutGrammar.hs.bak LexGrammar.x LexGrammar.x.bak ParGrammar.y ParGrammar.y.bak PrintGrammar.hs PrintGrammar.hs.bak SharedString.hs SharedString.hs.bak SkelGrammar.hs SkelGrammar.hs.bak TestGrammar.hs TestGrammar.hs.bak XMLGrammar.hs XMLGrammar.hs.bak ASTGrammar.agda ASTGrammar.agda.bak ParserGrammar.agda ParserGrammar.agda.bak IOLib.agda IOLib.agda.bak Main.agda Main.agda.bak Grammar.dtd Grammar.dtd.bak TestGrammar LexGrammar.hs ParGrammar.hs ParGrammar.info ParDataGrammar.hs Makefile
 
 
 # EOF
