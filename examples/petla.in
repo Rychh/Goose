@@ -1,0 +1,15 @@
+
+def main() {
+   x = 0;
+    while (true) {
+        if (x == 4) {
+            x = x + 1;
+            continue;
+        }
+        printInt(x);
+        if (x > 4)
+            break;
+    }
+    honk(100);
+    return 0;
+}

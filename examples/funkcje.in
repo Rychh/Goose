@@ -1,0 +1,17 @@
+/*
+ comment
+*/
+
+def foo(a, b, c) {
+  def bar(x) {
+    return a * x ;
+  }
+  return bar ;
+}
+
+def main () {
+  f = foo(2, 0, 0) ;
+  g = lambda x -> {return x * 3; } ;
+  h = \z -> {return z * 5 ;} ;
+  return  f(g(h(1)));
+}

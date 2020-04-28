@@ -1,0 +1,11 @@
+def triple(k) {
+    return (k, k, k);
+}
+
+def main() {
+    x = (1, 2);
+    y = triple(2);
+    (a, b, c) = (0, x[0], x[1]);
+    (e, d, f) =  triple(3);
+    return 0;
+}
