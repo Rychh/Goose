@@ -6,12 +6,19 @@ import System.IO ( stdin, hGetContents )
 import System.Environment ( getArgs, getProgName )
 import System.Exit ( exitFailure, exitSuccess )
 import Control.Monad (when)
+import Control.Monad.Reader
+import Control.Monad.State
+import Control.Monad.Except
+import Control.Monad.IO.Class
+
+import qualified Data.Map as Map
 
 import LexGrammar
 import ParGrammar
 import SkelGrammar
 import PrintGrammar
 import AbsGrammar
+import SkelGrammar (transProgram)
 
 
 
@@ -62,14 +69,20 @@ usage = do
 
 main :: IO ()
 main = do
+  let v = 1
   args <- getArgs
-  case args of
-    ["--help"] -> usage
-    [] -> getContents >>= run 2 pProgram
-    "-s":fs -> mapM_ (runFile 0 pProgram) fs
-    fs -> mapM_ (runFile 2 pProgram) fs
-
-
-
-
+  input <- case args of
+    -- ["--help"] -> usage
+    [] -> getContents
+    -- "-s":fs -> mapM_ (runFile 0 pProgram) fs
+    (file:_) -> readFile file
+  case pProgram (myLexer input) of
+    Ok tree -> do
+      putStrV v "\nGZ sprasowało sie"
+      showTree v tree
+      putStrV v "Interpretowanko ."
+      res <- runExceptT $ interpret tree
+      putStrV v "Honk:"
+      putStrLn $ show res
+      exitSuccess
 

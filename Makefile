@@ -19,7 +19,7 @@ ErrM.hs LexGrammar.x PrintGrammar.hs ParGrammar.y TestGrammar.hs : Grammar.cf
 %.hs : %.x
 	alex --ghc $<
 
-TestGrammar : TestGrammar.hs ErrM.hs LexGrammar.hs ParGrammar.hs PrintGrammar.hs
+TestGrammar : TestGrammar.hs ErrM.hs LexGrammar.hs ParGrammar.hs PrintGrammar.hs SkelGrammar.hs
 	ghc --make $< -o $@
 
 # Rules for cleaning generated files.
