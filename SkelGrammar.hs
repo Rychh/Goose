@@ -180,8 +180,8 @@ transExpr :: Expr -> Interpreter Value
 transExpr x = case x of
   -- EVar ident -> failure x
   ELitInt integer -> return $ Int $ integer
---   ELitTrue -> failure x
---   ELitFalse -> failure x
+  ELitTrue -> return $ Bool $ True
+  ELitFalse ->  return $ Bool $ False
 --   EApp ident exprs -> failure x
 --   EString string -> failure x
 --   EList exprs -> failure x
@@ -190,12 +190,45 @@ transExpr x = case x of
 
   EMul expr1 mulop expr2 -> transExprHlp expr1 expr2 (transMulOp mulop)
   EAdd expr1 addop expr2 -> transExprHlp expr1 expr2 (transAddOp addop)
-  -- ERel expr1 relop expr2 -> transExprHlp expr1 expr2 (transRelOp relop)
+  ERel expr1 relop expr2 -> transExprHlp expr1 expr2 (transRelOp relop)
 
---   Neg expr -> failure x
---   Not expr -> failure x  
---   EAnd expr1 expr2 -> failure x
---   EOr expr1 expr2 -> failure x
+  Neg expr -> do
+    val <- transExpr expr
+    case val of
+      Int i -> return $ Int $ ( -i)
+      otherwise -> return $ Int $ 0 -- todo
+  Not expr -> do
+    val <- transExpr expr
+    case val of
+      Bool b -> return $ Bool $ (not b)
+      otherwise -> return $ Bool $ False -- todo
+
+  EAnd expr1 expr2 -> do
+    val1 <- transExpr expr1
+    case val1 of
+      Bool b1 -> if b1
+        then do -- todo jakby sie walilo to zmienic
+          val2 <- transExpr expr2
+          case val2 of
+            Bool b1 -> return $ Bool $ b1
+            otherwise -> return $ Bool $ False  -- todo
+        else
+          return $ Bool $ False
+      otherwise -> return $ Bool $ False -- todo
+
+  EOr expr1 expr2 -> do
+    val1 <- transExpr expr1
+    case val1 of
+      Bool b1 -> if not b1
+        then do
+          val2 <- transExpr expr2
+          case val2 of
+            Bool b1 -> return $ Bool $ b1
+            otherwise -> return $ Bool $ False  -- todo
+        else
+          return $ Bool $ False
+      otherwise -> return $ Bool $ False -- todo
+
 --   ELambda args block -> failure x
 --   ELambdaS args block -> failure x
 transAddOp :: AddOp -> Value -> Value -> Interpreter Value
@@ -203,7 +236,7 @@ transAddOp x (Int l) (Int r) = case x of
   Plus -> return $ Int $ l + r
   Minus -> return $ Int $ l - r
 transAddOp _ _ _ = do
-  lift $ lift $ lift $ putStrLn "Wrong type" -- todo 
+  lift $ lift $ lift $ putStrLn "Wrong type AddOp" -- todo 
   return $ Int $ 0
 transMulOp :: MulOp -> Value -> Value -> Interpreter Value
 transMulOp x (Int l) (Int r) = case x of
@@ -221,15 +254,17 @@ transMulOp x (Int l) (Int r) = case x of
     else
       return $ Int $ 0
 transMulOp _ _ _ = do
-  lift $ lift $ lift $ putStrLn "Error add" -- todo 
+  lift $ lift $ lift $ putStrLn "Wrong type MulOp" -- todo 
   return $ Int $ 0
 
--- transRelOp :: RelOp -> Value -> Value -> Interpreter Value
--- transRelOp x = case x of
---   LTH -> failure x
---   LE -> failure x
---   GTH -> failure x
---   GE -> failure x
---   EQU -> failure x
---   NE -> failure x
-
+transRelOp :: RelOp -> Value -> Value -> Interpreter Value
+transRelOp x (Int l) (Int r) = case x of
+  LTH -> return $ Bool $ l < r
+  LE -> return $ Bool $ l <= r
+  GTH -> return $ Bool $ l > r
+  GE -> return $ Bool $ l >= r
+  EQU -> return $ Bool $ l == r
+  NE -> return $ Bool $ l /= r
+transRelOp _ _ _ = do
+  lift $ lift $ lift $ putStrLn "Wrong type RelOp" -- todo 
+  return $ Int $ 0
