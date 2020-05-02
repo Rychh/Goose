@@ -1,6 +1,6 @@
 // Hello world 
 
 def main () {
-  printString("hello world") ;
+  printStr("hello world") ;
   return 0 ;
 }

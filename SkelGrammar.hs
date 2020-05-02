@@ -15,7 +15,7 @@ import ErrM
 type Variable = Ident
 type FName = Ident
 type Location = Integer
-data Value = Int Int 
+data Value = Int Integer
   | Bool Bool 
 -- | Array Int (Map.Map Int Location)
 -- | Fun Fun
@@ -33,6 +33,9 @@ type Result = ExceptT String IO
 type Interpreter a = StateT Store (ReaderT Context Result) a
 
 -- type FunctionType = Ident -> [Variable] -> [Expr] -> Interpreter Context
+
+showVal :: Value -> String
+showVal (Int i) = show i
 
 failure :: Stmt -> Interpreter Context
 failure x = do
@@ -154,14 +157,29 @@ transStmt x = case x of
   Break -> failure x
   Conti -> failure x
   SExp expr -> failure x
-  PrInt expr -> failure x
+  PrInt expr -> do
+    val <- transExpr expr
+    lift $ lift $  lift $ putStrLn $ showVal val
+    context <- ask
+    return context
+
   PrStr expr -> failure x
   Honk expr -> failure x
   Error -> failure x
--- transExpr :: Expr -> Result
--- transExpr x = case x of
---   EVar ident -> failure x
---   ELitInt integer -> failure x
+
+
+transExprHlp :: Expr -> Expr -> (Value -> Value-> Interpreter Value) -> Interpreter Value
+transExprHlp expr1 expr2 op = do
+  val1 <- transExpr expr1
+  val2 <- transExpr expr2 
+  result <- op val1 val2
+  return result
+
+-- todo zmienic
+transExpr :: Expr -> Interpreter Value
+transExpr x = case x of
+  -- EVar ident -> failure x
+  ELitInt integer -> return $ Int $ integer
 --   ELitTrue -> failure x
 --   ELitFalse -> failure x
 --   EApp ident exprs -> failure x
@@ -169,25 +187,44 @@ transStmt x = case x of
 --   EList exprs -> failure x
 --   EList1 expr1 expr2 -> failure x
 --   EAt ident expr -> failure x
+
+  EMul expr1 mulop expr2 -> transExprHlp expr1 expr2 (transMulOp mulop)
+  EAdd expr1 addop expr2 -> transExprHlp expr1 expr2 (transAddOp addop)
+  -- ERel expr1 relop expr2 -> transExprHlp expr1 expr2 (transRelOp relop)
+
 --   Neg expr -> failure x
---   Not expr -> failure x
---   EMul expr1 mulop expr2 -> failure x
---   EAdd expr1 addop expr2 -> failure x
---   ERel expr1 relop expr2 -> failure x
+--   Not expr -> failure x  
 --   EAnd expr1 expr2 -> failure x
 --   EOr expr1 expr2 -> failure x
 --   ELambda args block -> failure x
 --   ELambdaS args block -> failure x
--- transAddOp :: AddOp -> Result
--- transAddOp x = case x of
---   Plus -> failure x
---   Minus -> failure x
--- transMulOp :: MulOp -> Result
--- transMulOp x = case x of
---   Times -> failure x
---   Div -> failure x
---   Mod -> failure x
--- transRelOp :: RelOp -> Result
+transAddOp :: AddOp -> Value -> Value -> Interpreter Value
+transAddOp x (Int l) (Int r) = case x of
+  Plus -> return $ Int $ l + r
+  Minus -> return $ Int $ l - r
+transAddOp _ _ _ = do
+  lift $ lift $ lift $ putStrLn "Wrong type" -- todo 
+  return $ Int $ 0
+transMulOp :: MulOp -> Value -> Value -> Interpreter Value
+transMulOp x (Int l) (Int r) = case x of
+  Times -> return $ Int $ l * r
+  Div -> do
+    lift $ lift $ lift $putStrLn "todo Div errorr" -- todo 
+    if r /= 0 then
+      return $ Int $ div l r
+    else
+      return $ Int $ 0
+  Mod -> do
+    lift $ lift $ lift $ putStrLn "todo Mod error" -- todo 
+    if r > 0 then
+      return $ Int $ mod l r
+    else
+      return $ Int $ 0
+transMulOp _ _ _ = do
+  lift $ lift $ lift $ putStrLn "Error add" -- todo 
+  return $ Int $ 0
+
+-- transRelOp :: RelOp -> Value -> Value -> Interpreter Value
 -- transRelOp x = case x of
 --   LTH -> failure x
 --   LE -> failure x

@@ -1,0 +1,12 @@
+// Hello world 
+
+def main () {
+  printInt(1) ;
+  printInt(1+1) ;
+  printInt(1+1*2) ;
+  printInt(1+1*4-1) ;
+  printInt(1+1*(5-1)) ;
+  x = 5 ;
+  printInt(x) ;
+  return 0 ;
+}
