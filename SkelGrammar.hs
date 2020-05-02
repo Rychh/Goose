@@ -76,10 +76,9 @@ getFun f = do
 
 next :: Interpreter Location
 next = do
-  modify (\store -> if size store == 0 then insert 0 1 store else store)
   store <- get
-  loc <- store ! 0
-  put $ insert 0 (loc+1) store
+  let loc = if size store /= 0 then (fst $ findMax store) + 1 else 1
+  put store
   return loc
 
 
