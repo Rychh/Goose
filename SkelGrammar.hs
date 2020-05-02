@@ -23,14 +23,14 @@ data Value = Int Int
 newtype Fun = Fun ([Value] -> Interpreter Value)
 
 type Store = Map Location Value
-type Env = (Map Variable Location,  Map FName Fun)
--- type Map = Map.Map -- ??
+type EnvVar = Map Variable Location
+type EnvFun = Map FName Fun
 
--- type Context = (Env, IO Maybe Variable)
+type Context = (EnvVar, EnvFun)
 
 type Result = ExceptT String IO
 
-type Interpreter a = StateT Store (ReaderT Env Result) a
+type Interpreter a = StateT Store (ReaderT Context Result) a
 
 -- type FunctionType = Ident -> [Variable] -> [Expr] -> Interpreter Context
 
@@ -49,30 +49,30 @@ interpret p = do
 
 transProgram :: Program -> Interpreter ()
 transProgram (Program ds) = do
-  env <- transTopDefs ds
-  (Fun main) <- local (const env) $ getFun (Ident "main")
-  local (const env) $ main []
+  context <- transTopDefs ds
+  (Fun main) <- local (const context) $ getFun (Ident "main")
+  local (const context) $ main []
   return ()
 
 
-transTopDefs :: [TopDef] -> Interpreter Env
+transTopDefs :: [TopDef] -> Interpreter Context
 transTopDefs [] = ask
 transTopDefs (d:ds) = do
-  env1 <- transTopDef d
-  env2 <- local (const env1) $ transTopDefs ds
-  return env2
+  context <- transTopDef d
+  context <- local (const context) $ transTopDefs ds
+  return context
 
-transTopDef :: TopDef -> Interpreter Env
+transTopDef :: TopDef -> Interpreter Context
 transTopDef (FnDef ident args block) = do
-  env <- ask
+  context <- ask
   -- let fun values = do
   --   env' <- local (const env) $ transArguments values arguments -- params
-  return env
+  return context
 
 getFun :: FName -> Interpreter Fun
 getFun f = do
-  env <- ask
-  return $ snd env ! f 
+  context <- ask
+  return $ snd context ! f 
 
 next :: Interpreter Location
 next = do
@@ -82,7 +82,7 @@ next = do
   return loc
 
 
-transArguments :: [Arg] -> [Value]-> Interpreter Env
+transArguments :: [Arg] -> [Value]-> Interpreter Context
 transArguments [] [] = ask
 transArguments (var:vars) (val:vals) =
   local (transArgument var val) $ transArguments
@@ -92,7 +92,7 @@ transArguments (var:vars) (val:vals) =
 
 
 
-transArgument :: Arg -> Value-> Interpreter Env
+transArgument :: Arg -> Value-> Interpreter Context
 transArgument var val = case var of
   Arg ident -> do
     loc <- next
