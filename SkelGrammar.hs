@@ -34,9 +34,11 @@ type Interpreter a = StateT Store (ReaderT Context Result) a
 
 -- type FunctionType = Ident -> [Variable] -> [Expr] -> Interpreter Context
 
--- failure :: Show a => a -> Result
--- failure x = Bad $ "Undefined case: " ++ show x
-
+failure :: Stmt -> Interpreter Context
+failure x = do
+  context <- ask
+  lift $ lift $ lift $ putStrLn "Cos zapomniales zaimplementowac" -- todo xd czemu tyle liftów
+  return $ context
 -- transIdent :: Ident -> Interpreter 
 -- transIdent x = case x of
 --   Ident string -> failure x
@@ -59,20 +61,33 @@ transTopDefs :: [TopDef] -> Interpreter Context
 transTopDefs [] = ask
 transTopDefs (d:ds) = do
   context <- transTopDef d
-  context <- local (const context) $ transTopDefs ds
-  return context
+  newCont <- local (const context) $ transTopDefs ds
+  return newCont
 
 transTopDef :: TopDef -> Interpreter Context
-transTopDef (FnDef ident args block) = do
+transTopDef (FnDef funName args block) = do
   context <- ask
-  -- let fun values = do
-  --   env' <- local (const env) $ transArguments values arguments -- params
-  return context
+  let newFun = transTopDefHlp context funName args block 
+  --   newCont2 <- local (const newCont1) $ transBlock block
+    -- todo może jakieś rekurencja
+  return $ setFun funName (Fun (newFun)) context
+
+transTopDefHlp context funName args block  values = do
+  newCont1 <- local (const context) $ transArguments args values-- params
+  -- let newCont2 = setFun funName dupa newCont1 -- recursion
+  -- local (const newCont2) $ transBlock block
+  local (const newCont1) $ transBlock block
+  return $ Int 0
 
 getFun :: FName -> Interpreter Fun
 getFun f = do
   context <- ask
   return $ snd context ! f 
+
+setFun :: FName -> Fun -> Context -> Context
+setFun name fun (envVar, envFun) = 
+  let newEnvFun = insert name fun envFun
+  in (envVar, newEnvFun)
 
 next :: Interpreter Location
 next = do
@@ -84,8 +99,10 @@ next = do
 
 transArguments :: [Arg] -> [Value]-> Interpreter Context
 transArguments [] [] = ask
-transArguments (var:vars) (val:vals) =
-  local (transArgument var val) $ transArguments
+transArguments (var:vars) (val:vals) = do
+  newCont1 <- transArgument var val
+  newCont2 <- local (const newCont1) $ transArguments vars vals -- todo co robi to const?
+  return newCont2
   -- loc <- alloc
   -- modify (\store -> insert loc val store)
   -- env' <- local (transArgument var val) $ transArguments
@@ -97,43 +114,50 @@ transArgument var val = case var of
   Arg ident -> do
     loc <- next
     modify (\store -> insert loc val store)
-    (eVar, eFun) <- ask
-    eVar' <- insert ident loc eVar
-    return (eVar', eFun)
+    (envVar, envFun) <- ask
+    let newEnvVar = insert ident loc envVar
+    return (newEnvVar, envFun)
   CntsArg ident -> do
-    lift $ putStrLn "TODO, nie zapomnij dodac constow"
-    return $ transArgument (Arg ident)
+    lift $ lift $ lift $ putStrLn "TODO, nie zapomnij dodac constow" -- todo xd czemu tyle liftów
+    newCont <- transArgument (Arg ident) val
+    return newCont
+ 
+transBlock :: Block -> Interpreter Context
+transBlock (Block (stmt:stmts)) = do
+  newCont1 <- transStmt stmt
+  newCont2 <- local (const newCont1) (transBlock (Block stmts))
+  return $ newCont2
+-- transBlock (x:xs) = do
+  -- return 0
 
--- transBlock :: Block -> Result
--- transBlock x = case x of
---   Block stmts -> failure x
--- transStmt :: Stmt -> Result
--- transStmt x = case x of
---   Empty -> failure x
---   BStmt block -> failure x
---   DeclCon ident expr -> failure x
---   DeclFun ident args block -> failure x
---   Ass ident expr -> failure x
---   TupleAss ident exprs -> failure x
---   TupleAss1 args exprs -> failure x
---   TupleAss2 args expr -> failure x
---   Incr ident -> failure x
---   Decr ident -> failure x
---   Ret expr -> failure x
---   RetTuple exprs -> failure x
---   VRet -> failure x
---   Cond expr stmt -> failure x
---   CondElse expr stmt1 stmt2 -> failure x
---   While expr stmt -> failure x
---   For ident expr1 expr2 stmt -> failure x
---   ForIn ident1 ident2 stmt -> failure x
---   Break -> failure x
---   Conti -> failure x
---   SExp expr -> failure x
---   PrInt expr -> failure x
---   PrStr expr -> failure x
---   Honk expr -> failure x
---   Error -> failure x
+   
+transStmt :: Stmt -> Interpreter Context
+transStmt x = case x of
+  Empty -> failure x
+  BStmt block -> failure x
+  DeclCon ident expr -> failure x
+  DeclFun ident args block -> failure x
+  Ass ident expr -> failure x
+  TupleAss ident exprs -> failure x
+  TupleAss1 args exprs -> failure x
+  TupleAss2 args expr -> failure x
+  Incr ident -> failure x
+  Decr ident -> failure x
+  Ret expr -> failure x
+  RetTuple exprs -> failure x
+  VRet -> failure x
+  Cond expr stmt -> failure x
+  CondElse expr stmt1 stmt2 -> failure x
+  While expr stmt -> failure x
+  For ident expr1 expr2 stmt -> failure x
+  ForIn ident1 ident2 stmt -> failure x
+  Break -> failure x
+  Conti -> failure x
+  SExp expr -> failure x
+  PrInt expr -> failure x
+  PrStr expr -> failure x
+  Honk expr -> failure x
+  Error -> failure x
 -- transExpr :: Expr -> Result
 -- transExpr x = case x of
 --   EVar ident -> failure x
