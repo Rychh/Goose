@@ -13,24 +13,25 @@ import qualified Data.Set as Set
 import AbsGrammar
 import ErrM
 
--- newtype Fun = Fun ([Value] -> Interpreter Value)
-type Variable = Ident
-type FName = Ident
+type Fun = [Value] -> Interpreter Value
+-- type Variable = Ident
+-- type FName = Ident
 type Location = Integer
 data Value = Int Integer
   | Bool Bool 
   | String String
+  | Fun Fun
 -- | Fun ([Value] -> Interpreter Value) todo 
 -- | Array Int (Map.Map Int Location)
 -- | Fun Fun
- deriving (Show, Eq, Ord)
-newtype Fun = Fun ([Value] -> Interpreter Value)
+--  deriving (Show)
+-- newtype Fun = Fun ([Value] -> Interpreter Value)  -- deriving (Show, Eq, Ord)
 
 type Store = Map Location Value
-type EnvVar = Map Variable Location
-type EnvFun = Map FName Fun
+type Env = Map Ident Location
+-- type EnvFun = Map FName Ident
 
-type Context = (EnvVar, EnvFun)
+type Context = (Env)
 
 type Result = ExceptT String IO
 
@@ -57,14 +58,14 @@ failure x = do
 
 interpret :: Program -> (Result ())
 interpret p = do
-  runReaderT (execStateT (transProgram p) empty) (empty, empty)
+  runReaderT (execStateT (transProgram p) empty) (empty)
   return ()
 
 
 transProgram :: Program -> Interpreter ()
 transProgram (Program ds) = do
   context <- transTopDefs ds
-  (Fun main) <- local (const context) $ getFun (Ident "main")
+  main <- local (const context) $ getFun (Ident "main")
   local (const context) $ main []
   return ()
 
@@ -82,7 +83,8 @@ transTopDef (FnDef funName args block) = do
   let newFun = transTopDefHlp context funName args block 
   --   newCont2 <- local (const newCont1) $ transBlock block
     -- todo może jakieś rekurencja
-  return $ setFun funName (Fun (newFun)) context
+  newCont <-setFun funName newFun context
+  return $ newCont
 
 transTopDefHlp context funName args block  values = do
   newCont1 <- local (const context) $ transArguments args values-- params
@@ -91,15 +93,24 @@ transTopDefHlp context funName args block  values = do
   local (const newCont1) $ transBlock block
   return $ Int 0
 
-getFun :: FName -> Interpreter Fun
-getFun f = do
+getFun :: Ident -> Interpreter Fun
+getFun funName = do
+  store <- get
   context <- ask
-  return $ snd context ! f 
+  let (Fun f) = store ! (context ! funName)
+  put store
+  return $ f
+  -- case ()  of
+  --   Fun f -> return $ f
+  --   _ -> return $ fst context ! funName
 
-setFun :: FName -> Fun -> Context -> Context
-setFun name fun (envVar, envFun) = 
-  let newEnvFun = insert name fun envFun
-  in (envVar, newEnvFun)
+setFun :: Ident -> Fun -> Context -> Interpreter Context
+setFun ident fun (env) = do
+  newLoc <- next
+  let loc = if member ident env then env ! ident else newLoc
+  modify (\store -> insert loc (Fun fun) store)
+  let newEnv = insert ident loc env
+  return $ (newEnv)
 
 next :: Interpreter Location
 next = do
@@ -126,9 +137,10 @@ transArgument var val = case var of
   Arg ident -> do
     loc <- next
     modify (\store -> insert loc val store)
-    (envVar, envFun) <- ask
-    let newEnvVar = insert ident loc envVar
-    return (newEnvVar, envFun)
+    (env) <- ask
+    let newEnv = insert ident loc env
+    return (newEnv)
+
   CntsArg ident -> do
     lift $ lift $ lift $ putStrLn "TODO, nie zapomnij dodac constow" -- todo xd czemu tyle liftów
     newCont <- transArgument (Arg ident) val
@@ -158,12 +170,12 @@ transStmt x = case x of
 
   Ass ident expr -> do -- todo dodać czysczenie pamieci
     val <- transExpr expr
-    (envVar, envFun) <- ask
+    (env) <- ask
     newLoc <- next
-    let loc = if member ident envVar then envVar ! ident else newLoc
+    let loc = if member ident env then env ! ident else newLoc
     modify (\store -> insert loc val store)
-    let newEnvVar = insert ident loc envVar
-    return (newEnvVar, envFun)
+    let newEnv = insert ident loc env
+    return (newEnv)
 
 
   TupleAss ident exprs -> failure x
@@ -218,14 +230,14 @@ transExpr :: Expr -> Interpreter Value
 transExpr x = case x of
   EVar ident -> do 
     store <- get
-    (envVar, _) <- ask
+    (env) <- ask
     -- member ident envVar -- todo brak zmiennej
-    return $ store ! (envVar ! ident)
+    return $ store ! (env ! ident) -- todo wywalanie dla funckji
 
   ELitInt integer -> return $ Int $ integer
   ELitTrue -> return $ Bool $ True
   ELitFalse ->  return $ Bool $ False
---   EApp ident exprs -> failure x
+  -- EApp ident exprs -> failure x
   EString string -> return $ String $ string
 --   EList exprs -> failure x
 --   EList1 expr1 expr2 -> failure x
