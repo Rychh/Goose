@@ -80,18 +80,23 @@ transTopDefs (d:ds) = do
 transTopDef :: TopDef -> Interpreter Context
 transTopDef (FnDef funName args block) = do
   context <- ask
-  let newFun = transTopDefHlp context funName args block 
+  let newFun values = do
+      newCont1 <- local (const context) $ transArguments args values-- params
+      newCont2 <- setFun funName newFun newCont1 -- recursion
+      local (const newCont2) $ transBlock block
+      return $ Int 0
+  -- let newFun = transTopDefHlp context funName args block 
   --   newCont2 <- local (const newCont1) $ transBlock block
     -- todo może jakieś rekurencja
   newCont <-setFun funName newFun context
   return $ newCont
 
-transTopDefHlp context funName args block  values = do
-  newCont1 <- local (const context) $ transArguments args values-- params
-  -- let newCont2 = setFun funName dupa newCont1 -- recursion
-  -- local (const newCont2) $ transBlock block
-  local (const newCont1) $ transBlock block
-  return $ Int 0
+-- transTopDefHlp context funName args block  values = do
+--   newCont1 <- local (const context) $ transArguments args values-- params
+--   newCont2 <- setFun funName dupa newCont1 -- recursion
+--   -- local (const newCont2) $ transBlock block
+--   local (const newCont2) $ transBlock block
+--   return $ Int 0
 
 getFun :: Ident -> Interpreter Fun
 getFun funName = do
@@ -111,6 +116,15 @@ setFun ident fun (env) = do
   modify (\store -> insert loc (Fun fun) store)
   let newEnv = insert ident loc env
   return $ (newEnv)
+
+runFun :: Ident -> [Expr] -> Interpreter Value
+runFun ident exprs = do
+  context <- ask
+  fun <- local (const context) $ getFun ident
+    -- local (const context) $ fun exprs
+  args <- mapM transExpr exprs
+  value <- local (const context) $ fun args
+  return value
 
 next :: Interpreter Location
 next = do
@@ -202,7 +216,10 @@ transStmt x = case x of
   ForIn ident1 ident2 stmt -> failure x
   Break -> failure x
   Conti -> failure x
-  SExp expr -> failure x
+  SExp expr -> do
+    context <- ask
+    _ <- transExpr expr
+    return context
   PrInt expr -> do
     val <- transExpr expr
     lift $ lift $  lift $ putStrLn $ showVal val
@@ -237,7 +254,7 @@ transExpr x = case x of
   ELitInt integer -> return $ Int $ integer
   ELitTrue -> return $ Bool $ True
   ELitFalse ->  return $ Bool $ False
-  -- EApp ident exprs -> failure x
+  EApp ident exprs -> runFun ident exprs
   EString string -> return $ String $ string
 --   EList exprs -> failure x
 --   EList1 expr1 expr2 -> failure x
@@ -302,7 +319,7 @@ transMulOp x (Int l) (Int r) = case x of
     if r /= 0 then
       return $ Int $ div l r
     else
-      return $ Int $ 0
+      throwError "DSD"
   Mod -> do
     lift $ lift $ lift $ putStrLn "todo Mod error" -- todo 
     if r > 0 then
