@@ -88,8 +88,9 @@ transTopDef (FnDef funName args block) = do
   let newFun values = do
       newCont1 <- local (const context) $ transArguments args values-- params
       newCont2 <- setFun funName newFun newCont1 -- recursion
-      local (const newCont2) $ transBlock block
-      return $ Int 0
+      (_, mode, Just val) <-local (const newCont2) $ transBlock block
+      -- todo czy dac errory?
+      return $ val
   -- let newFun = transTopDefHlp context funName args block 
   --   newCont2 <- local (const newCont1) $ transBlock block
     -- todo może jakieś rekurencja
@@ -202,7 +203,11 @@ transStmt x = case x of
   TupleAss2 args expr -> failure x
   Incr ident -> failure x
   Decr ident -> failure x
-  Ret expr -> failure x
+  Ret expr -> do
+    (env, _, _) <- ask  -- todo eventualnie jakies errory tutaj
+    val <- transExpr expr
+    return (env, ReturnMode, Just val)
+
   RetTuple exprs -> failure x
   VRet -> failure x
   Cond expr stmt -> transStmt (CondElse expr stmt Empty)
@@ -217,7 +222,7 @@ transStmt x = case x of
     case val of
       (Bool True) -> transBlock (Block [stmt, While expr stmt])
       _ -> return context
-  For ident expr1 expr2 stmt -> failure x
+  For ident expr1 expr2 stmt -> transBlock (Block [Ass ident expr1, While (ERel (EVar ident) LTH expr2) stmt])
   ForIn ident1 ident2 stmt -> failure x
   Break -> failure x
   Conti -> failure x
