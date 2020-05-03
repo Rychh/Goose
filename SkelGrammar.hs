@@ -26,12 +26,17 @@ data Value = Int Integer
 -- | Fun Fun
 --  deriving (Show)
 -- newtype Fun = Fun ([Value] -> Interpreter Value)  -- deriving (Show, Eq, Ord)
+data Mode = NothingMode
+  | ReturnMode
+  | ContinueMode
+  | BreakMode
+
 
 type Store = Map Location Value
 type Env = Map Ident Location
 -- type EnvFun = Map FName Ident
 
-type Context = (Env)
+type Context = (Env, Mode, Maybe Value)
 
 type Result = ExceptT String IO
 
@@ -45,7 +50,7 @@ showVal (Bool b)
   | b = "true"
   | otherwise = "false"
 showVal (String s) = s
--- showVal (Fun f) = "function"  -- todo
+showVal (Fun f) = "function"
 
 failure :: Stmt -> Interpreter Context
 failure x = do
@@ -58,7 +63,7 @@ failure x = do
 
 interpret :: Program -> (Result ())
 interpret p = do
-  runReaderT (execStateT (transProgram p) empty) (empty)
+  runReaderT (execStateT (transProgram p) empty) (empty, NothingMode, Nothing)
   return ()
 
 
@@ -101,8 +106,8 @@ transTopDef (FnDef funName args block) = do
 getFun :: Ident -> Interpreter Fun
 getFun funName = do
   store <- get
-  context <- ask
-  let (Fun f) = store ! (context ! funName)
+  (env, mode, mVal) <- ask
+  let (Fun f) = store ! (env ! funName)
   put store
   return $ f
   -- case ()  of
@@ -110,12 +115,12 @@ getFun funName = do
   --   _ -> return $ fst context ! funName
 
 setFun :: Ident -> Fun -> Context -> Interpreter Context
-setFun ident fun (env) = do
+setFun ident fun (env, mode, mVal) = do
   newLoc <- next
   let loc = if member ident env then env ! ident else newLoc
   modify (\store -> insert loc (Fun fun) store)
   let newEnv = insert ident loc env
-  return $ (newEnv)
+  return $ (newEnv, mode, mVal)
 
 runFun :: Ident -> [Expr] -> Interpreter Value
 runFun ident exprs = do
@@ -151,9 +156,9 @@ transArgument var val = case var of
   Arg ident -> do
     loc <- next
     modify (\store -> insert loc val store)
-    (env) <- ask
+    (env, mode, mVal) <- ask
     let newEnv = insert ident loc env
-    return (newEnv)
+    return (newEnv, mode, mVal)
 
   CntsArg ident -> do
     lift $ lift $ lift $ putStrLn "TODO, nie zapomnij dodac constow" -- todo xd czemu tyle liftów
@@ -184,12 +189,12 @@ transStmt x = case x of
 
   Ass ident expr -> do -- todo dodać czysczenie pamieci
     val <- transExpr expr
-    (env) <- ask
+    (env, mode, mVal) <- ask
     newLoc <- next
     let loc = if member ident env then env ! ident else newLoc
     modify (\store -> insert loc val store)
     let newEnv = insert ident loc env
-    return (newEnv)
+    return (newEnv, mode, mVal)
 
 
   TupleAss ident exprs -> failure x
@@ -247,7 +252,7 @@ transExpr :: Expr -> Interpreter Value
 transExpr x = case x of
   EVar ident -> do 
     store <- get
-    (env) <- ask
+    (env, _, _) <- ask
     -- member ident envVar -- todo brak zmiennej
     return $ store ! (env ! ident) -- todo wywalanie dla funckji
 
