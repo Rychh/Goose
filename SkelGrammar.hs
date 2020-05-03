@@ -6,17 +6,21 @@ import Control.Monad.State
 import Control.Monad.Except
 import Control.Monad.IO.Class
 import Data.Map
+import Data.String
 
 -- import qualified Data.Map as Map
 import qualified Data.Set as Set
 import AbsGrammar
 import ErrM
 
+-- newtype Fun = Fun ([Value] -> Interpreter Value)
 type Variable = Ident
 type FName = Ident
 type Location = Integer
 data Value = Int Integer
   | Bool Bool 
+  | String String
+-- | Fun ([Value] -> Interpreter Value) todo 
 -- | Array Int (Map.Map Int Location)
 -- | Fun Fun
  deriving (Show, Eq, Ord)
@@ -36,6 +40,11 @@ type Interpreter a = StateT Store (ReaderT Context Result) a
 
 showVal :: Value -> String
 showVal (Int i) = show i
+showVal (Bool b) 
+  | b = "true"
+  | otherwise = "false"
+showVal (String s) = s
+-- showVal (Fun f) = "function"  -- todo
 
 failure :: Stmt -> Interpreter Context
 failure x = do
@@ -163,7 +172,11 @@ transStmt x = case x of
     context <- ask
     return context
 
-  PrStr expr -> failure x
+  PrStr expr ->  do
+    val <- transExpr expr
+    lift $ lift $  lift $ putStrLn $ showVal val
+    context <- ask
+    return context
   Honk expr -> failure x
   Error -> failure x
 
@@ -183,7 +196,7 @@ transExpr x = case x of
   ELitTrue -> return $ Bool $ True
   ELitFalse ->  return $ Bool $ False
 --   EApp ident exprs -> failure x
---   EString string -> failure x
+  EString string -> return $ String $ string
 --   EList exprs -> failure x
 --   EList1 expr1 expr2 -> failure x
 --   EAt ident expr -> failure x
@@ -235,6 +248,7 @@ transAddOp :: AddOp -> Value -> Value -> Interpreter Value
 transAddOp x (Int l) (Int r) = case x of
   Plus -> return $ Int $ l + r
   Minus -> return $ Int $ l - r
+transAddOp Plus (String l) (String r) = return $ String $ l ++ r
 transAddOp _ _ _ = do
   lift $ lift $ lift $ putStrLn "Wrong type AddOp" -- todo 
   return $ Int $ 0

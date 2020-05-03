@@ -6,7 +6,13 @@ def main () {
   printInt(1+1*2) ;
   printInt(1+1*4-1) ;
   printInt(1+1*(5-1)) ;
-  x = 5 ;
-  printInt(x) ;
+//  x = 5 ;
+//  printInt(x) ;
+  printStr("str 6") ;
+  printStr("str 6" + "str 7") ;
+  y = "zmienna str 8 " ;
+//  printStr(y) ;
+//  x = "napsianie x 10"
+//  printStr(y + x) ;
   return 0 ;
 }

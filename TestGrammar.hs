@@ -69,7 +69,7 @@ usage = do
 
 main :: IO ()
 main = do
-  let v = 1
+  let v = 2
   args <- getArgs
   input <- case args of
     -- ["--help"] -> usage
