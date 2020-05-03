@@ -145,11 +145,22 @@ transBlock (Block (stmt:stmts)) = do
    
 transStmt :: Stmt -> Interpreter Context
 transStmt x = case x of
-  Empty -> failure x
+  Empty -> do
+    context <- ask
+    return context
   BStmt block -> failure x
   DeclCon ident expr -> failure x
   DeclFun ident args block -> failure x
-  Ass ident expr -> failure x
+
+  Ass ident expr -> do -- todo dodać czysczenie pamieci
+    val <- transExpr expr
+    loc <- next
+    (envVar, envFun) <- ask
+    modify (\store -> insert loc val store)
+    let newEnvVar = insert ident loc envVar
+    return (newEnvVar, envFun)
+
+
   TupleAss ident exprs -> failure x
   TupleAss1 args exprs -> failure x
   TupleAss2 args expr -> failure x
@@ -191,7 +202,12 @@ transExprHlp expr1 expr2 op = do
 -- todo zmienic
 transExpr :: Expr -> Interpreter Value
 transExpr x = case x of
-  -- EVar ident -> failure x
+  EVar ident -> do 
+    store <- get
+    (envVar, _) <- ask
+    -- member ident envVar -- todo brak zmiennej
+    return $ store ! (envVar ! ident)
+
   ELitInt integer -> return $ Int $ integer
   ELitTrue -> return $ Bool $ True
   ELitFalse ->  return $ Bool $ False

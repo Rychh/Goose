@@ -1,18 +1,28 @@
 // Hello world 
 
 def main () {
-  printInt(1) ;
-  printInt(1+1) ;
-  printInt(1+1*2) ;
-  printInt(1+1*4-1) ;
-  printInt(1+1*(5-1)) ;
-//  x = 5 ;
-//  printInt(x) ;
-  printStr("str 6") ;
-  printStr("str 6" + "str 7") ;
+  printInt(1+2*3-4*(1 - 2*4)/5) ;
+  x = 5 ;
+  printInt(x) ;
+  x = x + 1;
+  printInt(x) ;
+  printInt(x *7+6 + x*x) ;
   y = "zmienna str 8 " ;
-//  printStr(y) ;
+  printStr(y) ;
+  x = "zmiana wartosci x" ;
+  printStr(y + x) ;
+  return 0 ;
+}
+
+/*
+printInt(1 + 2 * 3 - 4 *(4-1*2)) ;
+  x = 5 ;
+  printInt(x + x*x//) ;
+
+  y = "zmienna str 8 " ;
+  printStr(y) ;
+
 //  x = "napsianie x 10"
 //  printStr(y + x) ;
   return 0 ;
-}
+*/
