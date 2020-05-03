@@ -141,6 +141,10 @@ transBlock (Block (stmt:stmts)) = do
   return $ newCont2
 -- transBlock (x:xs) = do
   -- return 0
+transBlock (Block []) = do
+  lift $ lift $ lift $ putStrLn "Koniec bloku"
+  context <- ask
+  return $ context 
 
    
 transStmt :: Stmt -> Interpreter Context
@@ -148,14 +152,15 @@ transStmt x = case x of
   Empty -> do
     context <- ask
     return context
-  BStmt block -> failure x
+  BStmt block -> transBlock block
   DeclCon ident expr -> failure x
   DeclFun ident args block -> failure x
 
   Ass ident expr -> do -- todo dodać czysczenie pamieci
     val <- transExpr expr
-    loc <- next
     (envVar, envFun) <- ask
+    newLoc <- next
+    let loc = if member ident envVar then envVar ! ident else newLoc
     modify (\store -> insert loc val store)
     let newEnvVar = insert ident loc envVar
     return (newEnvVar, envFun)
@@ -169,9 +174,18 @@ transStmt x = case x of
   Ret expr -> failure x
   RetTuple exprs -> failure x
   VRet -> failure x
-  Cond expr stmt -> failure x
-  CondElse expr stmt1 stmt2 -> failure x
-  While expr stmt -> failure x
+  Cond expr stmt -> transStmt (CondElse expr stmt Empty)
+  CondElse expr stmt1 stmt2 -> do
+    (Bool b) <- transExpr expr
+    newCont <- if b then transStmt stmt1 else transStmt stmt2
+    return newCont
+
+  While expr stmt -> do
+    context <- ask
+    val <- transExpr expr
+    case val of
+      (Bool True) -> transBlock (Block [stmt, While expr stmt])
+      _ -> return context
   For ident expr1 expr2 stmt -> failure x
   ForIn ident1 ident2 stmt -> failure x
   Break -> failure x
