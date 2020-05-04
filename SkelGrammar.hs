@@ -44,6 +44,24 @@ type Interpreter a = StateT Store (ReaderT Context Result) a
 
 -- type FunctionType = Ident -> [Variable] -> [Expr] -> Interpreter Context
 
+
+
+-- + 08 (zmienne read-only i pętla for)
+
+  -- Na 20 punktów
+-- + 09 (przesłanianie i statyczne wiązanie (zagnieżdżone procedury/funkcje) ) 
+-- + 10 (obsługa błędów wykonania)
+-- + 11 (funkcje zwracające wartość)
+
+  -- Na 30 punktów
+-- + 13 (2) (funkcje zagnieżdżone ze statycznym wiązaniem)
+-- + 14 (1) (rekordy/tablice/listy)
+-- + 15 (2) (krotki z przypisaniem)
+-- + 16 (1) (break, continue)
+-- + 17 (4) (funkcje wyższego rzędu, anonimowe, domknięcia)
+
+
+
 showVal :: Value -> String
 showVal (Int i) = show i
 showVal (Bool b) 
@@ -90,26 +108,30 @@ transTopDefs (d:ds) = do
   return newCont
 
 transTopDef :: TopDef -> Interpreter Context
-transTopDef (FnDef funName args block) = do
+transTopDef (FnDef funName args block) = createAndSetFun funName args block
+
+createAndSetFun :: Ident -> [Arg] -> Block -> Interpreter Context
+createAndSetFun funName args block = do
   context <- ask
   let newFun values = do
       newCont1 <- local (const context) $ transArguments args values-- params
       newCont2 <- setFun funName newFun newCont1 -- recursion
-      (_, mode, Just val) <-local (const newCont2) $ transBlock block
-      -- todo czy dac errory?
-      return $ val
-  -- let newFun = transTopDefHlp context funName args block 
-  --   newCont2 <- local (const newCont1) $ transBlock block
-    -- todo może jakieś rekurencja
+      (_, mode, mVal) <- local (const newCont2) $ transBlock block
+      case mVal of
+        Just val -> return $ val
+        Nothing ->  return $ Int $ 0
   newCont <-setFun funName newFun context
   return $ newCont
 
--- transTopDefHlp context funName args block  values = do
---   newCont1 <- local (const context) $ transArguments args values-- params
---   newCont2 <- setFun funName dupa newCont1 -- recursion
---   -- local (const newCont2) $ transBlock block
---   local (const newCont2) $ transBlock block
---   return $ Int 0
+
+createLambda :: Context -> [Arg] -> Block -> Fun
+createLambda context args block values = do
+  newCont <- local (const context) $ transArguments args values-- params
+  -- newCont2 <- setFun funName newFun newCont1 -- recursion
+  (_, mode, mVal) <- local (const newCont) $ transBlock block
+  case mVal of
+    Just val -> return $ val
+    Nothing ->  return $ Int $ 0
 
 getFun :: Ident -> Interpreter Fun
 getFun funName = do
@@ -196,7 +218,7 @@ transStmt x = case x of
     return context
   BStmt block -> transBlock block
   DeclCon ident expr -> failure x
-  DeclFun ident args block -> failure x
+  DeclFun ident args block -> createAndSetFun ident args block
 
   Ass ident expr -> do -- todo dodać czysczenie pamieci
     val <- transExpr expr
@@ -211,8 +233,10 @@ transStmt x = case x of
   TupleAss ident exprs -> failure x
   TupleAss1 args exprs -> failure x
   TupleAss2 args expr -> failure x
-  Incr ident -> failure x
-  Decr ident -> failure x
+
+  Incr ident -> transStmt $ Ass ident (EAdd (EVar ident) Plus (ELitInt 1))
+  
+  Decr ident -> transStmt $ Ass ident (EAdd (EVar ident) Minus (ELitInt 1))
   
   Ret expr -> do
     (env, mode, _) <- ask
@@ -221,7 +245,8 @@ transStmt x = case x of
     return (env, ReturnMode, Just val)
 
   RetTuple exprs -> failure x
-  VRet -> failure x
+
+  VRet -> transStmt $ Ret (ELitInt 0)
   
   Cond expr stmt -> transStmt (CondElse expr stmt Empty)
   
@@ -237,7 +262,7 @@ transStmt x = case x of
       (Bool True) -> transBlock (Block [stmt, While expr stmt])
       _ -> return context
   
-  For ident expr1 expr2 stmt -> transBlock (Block [Ass ident expr1, While (ERel (EVar ident) LTH expr2) stmt])
+  For ident expr1 expr2 stmt -> transBlock (Block [Ass ident expr1, Incr ident, While (ERel (EVar ident) LTH expr2) (BStmt $ Block [stmt, Incr ident])])
 
   ForIn ident1 ident2 stmt -> failure x
   Break -> failure x
@@ -332,8 +357,20 @@ transExpr x = case x of
           return $ Bool $ False
       otherwise -> throwError $ "Incorrect Or operation type: " ++ showVal val1
 
---   ELambda args block -> failure x
---   ELambdaS args block -> failure x
+  ELambda args block -> do
+    context <- ask 
+    let newFun = createLambda context args block
+    return  $ (Fun newFun)
+    -- context <- ask
+    -- let newFun values = do
+    --   newCont <- local (const context) $ transArguments args values-- params
+    --   (_, mode, mVal) <- local (const newCont) $ transBlock block
+    --   case mVal of
+    --     Just val -> return $ val
+    --     Nothing ->  return $ Int $ 0
+    -- return $ Fun $ newFun
+  ELambdaS args block -> transExpr $ ELambda args block
+
 transAddOp :: AddOp -> Value -> Value -> Interpreter Value
 transAddOp x (Int l) (Int r) = case x of
   Plus -> return $ Int $ l + r
