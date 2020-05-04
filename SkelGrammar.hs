@@ -30,7 +30,7 @@ data Mode = NothingMode
   | ReturnMode
   | ContinueMode
   | BreakMode
-
+  deriving (Show, Eq)
 
 type Store = Map Location Value
 type Env = Map Ident Location
@@ -60,6 +60,13 @@ failure x = do
 -- transIdent :: Ident -> Interpreter 
 -- transIdent x = case x of
 --   Ident string -> failure x
+
+checkMode :: Mode -> Mode -> Interpreter ()
+checkMode mode expected =
+  if mode == expected then
+    return ()
+  else
+    throwError $ "Invalid Mode: Expected " ++ show expected ++ ", got " ++ show mode 
 
 interpret :: Program -> (Result ())
 interpret p = do
@@ -168,10 +175,13 @@ transArgument var val = case var of
  
 transBlock :: Block -> Interpreter Context
 transBlock (Block (stmt:stmts)) = do
-  newCont1 <- transStmt stmt
-  newCont2 <- local (const newCont1) (transBlock (Block stmts))
-  return $ newCont2
--- transBlock (x:xs) = do
+  (env, mode, mVal) <- transStmt stmt
+  if mode /= NothingMode then
+    return $ (env, mode, mVal)
+  else do
+    newCont <- local (const (env, mode, mVal)) (transBlock (Block stmts))
+    return $ newCont
+  -- transBlock (x:xs) = do
   -- return 0
 transBlock (Block []) = do
   lift $ lift $ lift $ putStrLn "Koniec bloku"
@@ -203,14 +213,18 @@ transStmt x = case x of
   TupleAss2 args expr -> failure x
   Incr ident -> failure x
   Decr ident -> failure x
+  
   Ret expr -> do
-    (env, _, _) <- ask  -- todo eventualnie jakies errory tutaj
+    (env, mode, _) <- ask
+    checkMode mode NothingMode
     val <- transExpr expr
     return (env, ReturnMode, Just val)
 
   RetTuple exprs -> failure x
   VRet -> failure x
+  
   Cond expr stmt -> transStmt (CondElse expr stmt Empty)
+  
   CondElse expr stmt1 stmt2 -> do
     (Bool b) <- transExpr expr
     newCont <- if b then transStmt stmt1 else transStmt stmt2
@@ -222,14 +236,18 @@ transStmt x = case x of
     case val of
       (Bool True) -> transBlock (Block [stmt, While expr stmt])
       _ -> return context
+  
   For ident expr1 expr2 stmt -> transBlock (Block [Ass ident expr1, While (ERel (EVar ident) LTH expr2) stmt])
+
   ForIn ident1 ident2 stmt -> failure x
   Break -> failure x
   Conti -> failure x
+  
   SExp expr -> do
     context <- ask
     _ <- transExpr expr
     return context
+  
   PrInt expr -> do
     val <- transExpr expr
     lift $ lift $  lift $ putStrLn $ showVal val
@@ -241,6 +259,7 @@ transStmt x = case x of
     lift $ lift $  lift $ putStrLn $ showVal val
     context <- ask
     return context
+  
   Honk expr -> failure x
   Error -> failure x
 
@@ -258,8 +277,10 @@ transExpr x = case x of
   EVar ident -> do 
     store <- get
     (env, _, _) <- ask
-    -- member ident envVar -- todo brak zmiennej
-    return $ store ! (env ! ident) -- todo wywalanie dla funckji
+    if not (member ident env) then
+      throwError $ "Variable not initialized: " ++ show ident
+    else
+      return $ store ! (env ! ident)
 
   ELitInt integer -> return $ Int $ integer
   ELitTrue -> return $ Bool $ True
@@ -278,12 +299,12 @@ transExpr x = case x of
     val <- transExpr expr
     case val of
       Int i -> return $ Int $ ( -i)
-      otherwise -> return $ Int $ 0 -- todo
+      oherwise -> throwError $ "Incorrect Negation operation type: " ++ showVal val
   Not expr -> do
     val <- transExpr expr
     case val of
       Bool b -> return $ Bool $ (not b)
-      otherwise -> return $ Bool $ False -- todo
+      otherwise -> throwError $ "Incorrect Not operation type: " ++ showVal val
 
   EAnd expr1 expr2 -> do
     val1 <- transExpr expr1
@@ -293,10 +314,10 @@ transExpr x = case x of
           val2 <- transExpr expr2
           case val2 of
             Bool b1 -> return $ Bool $ b1
-            otherwise -> return $ Bool $ False  -- todo
+            otherwise -> throwError $ "Incorrect And operation type: " ++ showVal val2
         else
           return $ Bool $ False
-      otherwise -> return $ Bool $ False -- todo
+      otherwise -> throwError $ "Incorrect And operation type: " ++ showVal val1
 
   EOr expr1 expr2 -> do
     val1 <- transExpr expr1
@@ -306,10 +327,10 @@ transExpr x = case x of
           val2 <- transExpr expr2
           case val2 of
             Bool b1 -> return $ Bool $ b1
-            otherwise -> return $ Bool $ False  -- todo
+            otherwise -> throwError $ "Incorrect Or operation type: " ++ showVal val2
         else
           return $ Bool $ False
-      otherwise -> return $ Bool $ False -- todo
+      otherwise -> throwError $ "Incorrect Or operation type: " ++ showVal val1
 
 --   ELambda args block -> failure x
 --   ELambdaS args block -> failure x
@@ -318,27 +339,25 @@ transAddOp x (Int l) (Int r) = case x of
   Plus -> return $ Int $ l + r
   Minus -> return $ Int $ l - r
 transAddOp Plus (String l) (String r) = return $ String $ l ++ r
-transAddOp _ _ _ = do
-  lift $ lift $ lift $ putStrLn "Wrong type AddOp" -- todo 
-  return $ Int $ 0
+transAddOp _ l r = do
+   throwError $ "Incorrect Plus/Minus operation types: " ++ showVal l ++ " " ++ showVal r
+
 transMulOp :: MulOp -> Value -> Value -> Interpreter Value
 transMulOp x (Int l) (Int r) = case x of
   Times -> return $ Int $ l * r
   Div -> do
-    lift $ lift $ lift $putStrLn "todo Div errorr" -- todo 
     if r /= 0 then
       return $ Int $ div l r
     else
-      throwError "DSD"
+      throwError $ "Invalid operation: division by zero"
   Mod -> do
     lift $ lift $ lift $ putStrLn "todo Mod error" -- todo 
     if r > 0 then
       return $ Int $ mod l r
     else
-      return $ Int $ 0
-transMulOp _ _ _ = do
-  lift $ lift $ lift $ putStrLn "Wrong type MulOp" -- todo 
-  return $ Int $ 0
+      throwError $ "Invalid operation: modulo 0"
+transMulOp _ l r = do
+  throwError $ "Incorrect Times/Div/Mod operation types: " ++ showVal l ++ " " ++ showVal r
 
 transRelOp :: RelOp -> Value -> Value -> Interpreter Value
 transRelOp x (Int l) (Int r) = case x of
@@ -348,6 +367,5 @@ transRelOp x (Int l) (Int r) = case x of
   GE -> return $ Bool $ l >= r
   EQU -> return $ Bool $ l == r
   NE -> return $ Bool $ l /= r
-transRelOp _ _ _ = do
-  lift $ lift $ lift $ putStrLn "Wrong type RelOp" -- todo 
-  return $ Int $ 0
+transRelOp _ l r = throwError $ "Incorrect comparison operation types: " ++ showVal l ++ " " ++ showVal r
+
