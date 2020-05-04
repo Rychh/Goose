@@ -197,16 +197,32 @@ transArgument var val = case var of
  
 transBlock :: Block -> Interpreter Context
 transBlock (Block (stmt:stmts)) = do
-  (env, mode, mVal) <- transStmt stmt
-  if mode /= NothingMode then
-    return $ (env, mode, mVal)
-  else do
-    newCont <- local (const (env, mode, mVal)) (transBlock (Block stmts))
-    return $ newCont
+  (env, mode, mVal) <- ask
+  case (mode, stmt) of
+    (NothingMode, _) -> do 
+      newCont1 <- transStmt stmt
+      newCont2 <- local (const newCont1) (transBlock (Block stmts))
+      return newCont2
+    (ContinueMode, While _ _) -> do 
+      newCont1 <- transStmt stmt
+      newCont2 <- local (const newCont1) (transBlock (Block stmts))
+      return newCont2
+    (BreakMode, While _ _) -> do 
+      newCont1 <- transStmt stmt
+      newCont2 <- local (const newCont1) (transBlock (Block stmts))
+      return newCont2
+    (otherwise, _) -> return (env, mode, mVal)
+
+
+  -- (env, mode, mVal) <- transStmt stmt
+  -- if mode /= NothingMode then
+  --   return $ (env, mode, mVal)
+  -- else do
+    
+  --   return $ newCont
   -- transBlock (x:xs) = do
   -- return 0
 transBlock (Block []) = do
-  lift $ lift $ lift $ putStrLn "Koniec bloku"
   context <- ask
   return $ context 
 
@@ -256,18 +272,31 @@ transStmt x = case x of
     return newCont
 
   While expr stmt -> do
-    context <- ask
+    (env, mode, mVal) <- ask
     val <- transExpr expr
-    case val of
-      (Bool True) -> transBlock (Block [stmt, While expr stmt])
-      _ -> return context
+    case (mode, val) of
+      (BreakMode, _) -> return (env, NothingMode, mVal)
+      -- (ContinueMode, _) -> return (env, NothingMode, mVal)
+      (ContinueMode, Bool True) -> local (const (env, NothingMode, mVal)) $ transBlock (Block [stmt, While expr stmt])
+      (ContinueMode, Bool False) -> return (env, NothingMode, mVal)  
+      (NothingMode, Bool True) -> transBlock (Block [stmt, While expr stmt])
+      otherwise -> return (env, mode, mVal) 
   
   For ident expr1 expr2 stmt -> transBlock (Block [Ass ident expr1, Incr ident, While (ERel (EVar ident) LTH expr2) (BStmt $ Block [stmt, Incr ident])])
 
   ForIn ident1 ident2 stmt -> failure x
-  Break -> failure x
-  Conti -> failure x
-  
+  Break -> do
+    (env, mode, mVal) <- ask
+    case mode of
+      NothingMode -> return (env, BreakMode, mVal)
+      otherwise -> return (env, mode, mVal)
+
+  Conti -> do
+    (env, mode, mVal) <- ask
+    case mode of
+      NothingMode -> return (env, ContinueMode, mVal)
+      otherwise -> return (env, mode, mVal)
+
   SExp expr -> do
     context <- ask
     _ <- transExpr expr
@@ -361,14 +390,7 @@ transExpr x = case x of
     context <- ask 
     let newFun = createLambda context args block
     return  $ (Fun newFun)
-    -- context <- ask
-    -- let newFun values = do
-    --   newCont <- local (const context) $ transArguments args values-- params
-    --   (_, mode, mVal) <- local (const newCont) $ transBlock block
-    --   case mVal of
-    --     Just val -> return $ val
-    --     Nothing ->  return $ Int $ 0
-    -- return $ Fun $ newFun
+
   ELambdaS args block -> transExpr $ ELambda args block
 
 transAddOp :: AddOp -> Value -> Value -> Interpreter Value
@@ -388,7 +410,6 @@ transMulOp x (Int l) (Int r) = case x of
     else
       throwError $ "Invalid operation: division by zero"
   Mod -> do
-    lift $ lift $ lift $ putStrLn "todo Mod error" -- todo 
     if r > 0 then
       return $ Int $ mod l r
     else
