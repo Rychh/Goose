@@ -1,68 +1,8 @@
-def niePetla(x){
-  x = x + 1;
-  if (x < 5) {
-    printInt(x);
-    niePetla(x);
-  } else {
-    printStr("Koniec");
-  }
-}
 
 def main() {
-  x = 0;
-  printInt(x);
-  niePetla(x);
-  printInt(x);
-  u = 0/x;
-  y = True;
-
+  tab = [1,2,3,4];
+  tab2 = ["DSAD"] * 5;
+  printInt(tab[0]);
+  printInt(tab2[2]);
   return 0;
 }
-/*
-
-  if (x == 0) {
-    x = 2;
-    printStr("OK-1");
-  } else {
-    x = 1;
-    printStr("Nie-1");
-  } ;
-
-  if (x == 0) {
-    printStr("Nie-1.5");
-  } else {
-    printStr("Ok-1.5");
-  }
-
-  if (true && 1 != 2) {
-    printStr("OK-2");
-  }
-
-    if (false && 1 != 2) {
-    printStr("Nie-2");
-  }
-
-    if (false || 1 != 2) {
-    printStr("OK-3");
-  }
-
-    if (false || 1 == 2) {
-    printStr("Nie-3");
-  }
-  i = 0;
-  j = i;
-
-  while (i <5) {
-    i = i +1;
-    printInt(i);
-  }
-  printInt(i);
-  while (i > 0) {
-    j = 0;
-    while (i > j) {
-      j = j +1;
-      printInt(j);
-    }
-    i = i-1;
-  }
-  */

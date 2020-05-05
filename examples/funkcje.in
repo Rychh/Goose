@@ -7,11 +7,16 @@ def foo(a, b, c) {
     return a * x ;
   }
   return bar ;
+  printStr("dupa")
 }
 
 def main () {
   f = foo(2, 0, 0) ;
+  printInt(f(1));
   g = lambda x -> {return x * 3; } ;
+  printInt(g(1));
   h = \z -> {return z * 5 ;} ;
+  printInt(h(1));
+  printInt(f(g(h(1))) );
   return  f(g(h(1)));
 }

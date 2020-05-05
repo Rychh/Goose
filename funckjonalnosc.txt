@@ -8,7 +8,7 @@
 + 05 (while, if)
 + 06 (funkcje lub procedury, rekurencja)
   07 (przez zmienną / przez wartość / in/out) - 07 lub 08
-+ 08 (zmienne read-only i pętla for)
++ 08 (zmienne read-only i pętla for)  -- todo
 
   Na 20 punktów
 + 09 (przesłanianie i statyczne wiązanie (zagnieżdżone procedury/funkcje) ) 
