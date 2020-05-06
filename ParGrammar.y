@@ -49,15 +49,14 @@ import ErrM
   'if' { PT _ (TS _ 34) }
   'in' { PT _ (TS _ 35) }
   'lambda' { PT _ (TS _ 36) }
-  'printInt' { PT _ (TS _ 37) }
-  'printStr' { PT _ (TS _ 38) }
-  'return' { PT _ (TS _ 39) }
-  'to' { PT _ (TS _ 40) }
-  'true' { PT _ (TS _ 41) }
-  'while' { PT _ (TS _ 42) }
-  '{' { PT _ (TS _ 43) }
-  '||' { PT _ (TS _ 44) }
-  '}' { PT _ (TS _ 45) }
+  'println' { PT _ (TS _ 37) }
+  'return' { PT _ (TS _ 38) }
+  'to' { PT _ (TS _ 39) }
+  'true' { PT _ (TS _ 40) }
+  'while' { PT _ (TS _ 41) }
+  '{' { PT _ (TS _ 42) }
+  '||' { PT _ (TS _ 43) }
+  '}' { PT _ (TS _ 44) }
   L_ident  { PT _ (TV $$) }
   L_integ  { PT _ (TI $$) }
   L_quoted { PT _ (TL $$) }
@@ -86,6 +85,10 @@ ListArg :: { [Arg] }
 ListArg : {- empty -} { [] }
         | Arg { (:[]) $1 }
         | Arg ',' ListArg { (:) $1 $3 }
+ListIdent :: { [Ident] }
+ListIdent : {- empty -} { [] }
+          | Ident { (:[]) $1 }
+          | Ident ',' ListIdent { (:) $1 $3 }
 Block :: { Block }
 Block : '{' ListStmt '}' { AbsGrammar.Block (reverse $2) }
 ListStmt :: { [Stmt] }
@@ -96,13 +99,10 @@ Stmt : ';' { AbsGrammar.Empty }
      | 'const' Ident '=' Expr { AbsGrammar.DeclCon $2 $4 }
      | 'def' Ident '(' ListArg ')' Block { AbsGrammar.DeclFun $2 $4 $6 }
      | Ident '=' Expr ';' { AbsGrammar.Ass $1 $3 }
-     | Ident '=' '(' ListExpr ')' ';' { AbsGrammar.TupleAss $1 $4 }
-     | '(' ListArg ')' '=' '(' ListExpr ')' ';' { AbsGrammar.TupleAss1 $2 $6 }
-     | '(' ListArg ')' '=' Expr ';' { AbsGrammar.TupleAss2 $2 $5 }
+     | '(' ListIdent ')' '=' Expr ';' { AbsGrammar.TupleAss $2 $5 }
      | Ident '++' ';' { AbsGrammar.Incr $1 }
      | Ident '--' ';' { AbsGrammar.Decr $1 }
      | 'return' Expr ';' { AbsGrammar.Ret $2 }
-     | 'return' '(' ListExpr ')' ';' { AbsGrammar.RetTuple $3 }
      | 'return' ';' { AbsGrammar.VRet }
      | 'if' '(' Expr ')' Stmt { AbsGrammar.Cond $3 $5 }
      | 'if' '(' Expr ')' Stmt 'else' Stmt { AbsGrammar.CondElse $3 $5 $7 }
@@ -112,8 +112,7 @@ Stmt : ';' { AbsGrammar.Empty }
      | 'break' { AbsGrammar.Break }
      | 'continue' { AbsGrammar.Conti }
      | Expr ';' { AbsGrammar.SExp $1 }
-     | 'printInt' '(' Expr ')' { AbsGrammar.PrInt $3 }
-     | 'printStr' '(' Expr ')' { AbsGrammar.PrStr $3 }
+     | 'println' '(' Expr ')' { AbsGrammar.Print $3 }
      | 'honk' '(' Expr ')' { AbsGrammar.Honk $3 }
      | 'error' '(' ')' { AbsGrammar.Error }
 Expr7 :: { Expr }
@@ -125,6 +124,7 @@ Expr7 : Ident { AbsGrammar.EVar $1 }
       | String { AbsGrammar.EString $1 }
       | '[' ListExpr ']' { AbsGrammar.EList $2 }
       | '[' Expr ']' '*' Expr { AbsGrammar.EList1 $2 $5 }
+      | '(' ListExpr ')' { AbsGrammar.ETuple $2 }
       | Ident '[' Expr ']' { AbsGrammar.EAt $1 $3 }
       | '(' Expr ')' { $2 }
 Expr6 :: { Expr }

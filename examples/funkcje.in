@@ -1,13 +1,12 @@
-/*
+
  comment
-*/
+
 
 def foo(a, b, c) {
   def bar(x) {
     return a * x ;
   }
   return bar ;
-  printStr("dupa")
 }
 
 def main () {
@@ -17,6 +16,6 @@ def main () {
   printInt(g(1));
   h = \z -> {return z * 5 ;} ;
   printInt(h(1));
-  printInt(f(g(h(1))) );
+  printInt(f(g(h(1))));
   return  f(g(h(1)));
 }

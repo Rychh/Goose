@@ -90,6 +90,9 @@ instance Print Double where
 
 instance Print AbsGrammar.Ident where
   prt _ (AbsGrammar.Ident i) = doc (showString i)
+  prtList _ [] = concatD []
+  prtList _ [x] = concatD [prt 0 x]
+  prtList _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
 
 instance Print AbsGrammar.Program where
   prt i e = case e of
@@ -115,6 +118,9 @@ instance Print AbsGrammar.Arg where
 instance Print [AbsGrammar.Arg] where
   prt = prtList
 
+instance Print [AbsGrammar.Ident] where
+  prt = prtList
+
 instance Print AbsGrammar.Block where
   prt i e = case e of
     AbsGrammar.Block stmts -> prPrec i 0 (concatD [doc (showString "{"), prt 0 stmts, doc (showString "}")])
@@ -129,13 +135,10 @@ instance Print AbsGrammar.Stmt where
     AbsGrammar.DeclCon id expr -> prPrec i 0 (concatD [doc (showString "const"), prt 0 id, doc (showString "="), prt 0 expr])
     AbsGrammar.DeclFun id args block -> prPrec i 0 (concatD [doc (showString "def"), prt 0 id, doc (showString "("), prt 0 args, doc (showString ")"), prt 0 block])
     AbsGrammar.Ass id expr -> prPrec i 0 (concatD [prt 0 id, doc (showString "="), prt 0 expr, doc (showString ";")])
-    AbsGrammar.TupleAss id exprs -> prPrec i 0 (concatD [prt 0 id, doc (showString "="), doc (showString "("), prt 0 exprs, doc (showString ")"), doc (showString ";")])
-    AbsGrammar.TupleAss1 args exprs -> prPrec i 0 (concatD [doc (showString "("), prt 0 args, doc (showString ")"), doc (showString "="), doc (showString "("), prt 0 exprs, doc (showString ")"), doc (showString ";")])
-    AbsGrammar.TupleAss2 args expr -> prPrec i 0 (concatD [doc (showString "("), prt 0 args, doc (showString ")"), doc (showString "="), prt 0 expr, doc (showString ";")])
+    AbsGrammar.TupleAss ids expr -> prPrec i 0 (concatD [doc (showString "("), prt 0 ids, doc (showString ")"), doc (showString "="), prt 0 expr, doc (showString ";")])
     AbsGrammar.Incr id -> prPrec i 0 (concatD [prt 0 id, doc (showString "++"), doc (showString ";")])
     AbsGrammar.Decr id -> prPrec i 0 (concatD [prt 0 id, doc (showString "--"), doc (showString ";")])
     AbsGrammar.Ret expr -> prPrec i 0 (concatD [doc (showString "return"), prt 0 expr, doc (showString ";")])
-    AbsGrammar.RetTuple exprs -> prPrec i 0 (concatD [doc (showString "return"), doc (showString "("), prt 0 exprs, doc (showString ")"), doc (showString ";")])
     AbsGrammar.VRet -> prPrec i 0 (concatD [doc (showString "return"), doc (showString ";")])
     AbsGrammar.Cond expr stmt -> prPrec i 0 (concatD [doc (showString "if"), doc (showString "("), prt 0 expr, doc (showString ")"), prt 0 stmt])
     AbsGrammar.CondElse expr stmt1 stmt2 -> prPrec i 0 (concatD [doc (showString "if"), doc (showString "("), prt 0 expr, doc (showString ")"), prt 0 stmt1, doc (showString "else"), prt 0 stmt2])
@@ -145,8 +148,7 @@ instance Print AbsGrammar.Stmt where
     AbsGrammar.Break -> prPrec i 0 (concatD [doc (showString "break")])
     AbsGrammar.Conti -> prPrec i 0 (concatD [doc (showString "continue")])
     AbsGrammar.SExp expr -> prPrec i 0 (concatD [prt 0 expr, doc (showString ";")])
-    AbsGrammar.PrInt expr -> prPrec i 0 (concatD [doc (showString "printInt"), doc (showString "("), prt 0 expr, doc (showString ")")])
-    AbsGrammar.PrStr expr -> prPrec i 0 (concatD [doc (showString "printStr"), doc (showString "("), prt 0 expr, doc (showString ")")])
+    AbsGrammar.Print expr -> prPrec i 0 (concatD [doc (showString "println"), doc (showString "("), prt 0 expr, doc (showString ")")])
     AbsGrammar.Honk expr -> prPrec i 0 (concatD [doc (showString "honk"), doc (showString "("), prt 0 expr, doc (showString ")")])
     AbsGrammar.Error -> prPrec i 0 (concatD [doc (showString "error"), doc (showString "("), doc (showString ")")])
   prtList _ [] = concatD []
@@ -162,6 +164,7 @@ instance Print AbsGrammar.Expr where
     AbsGrammar.EString str -> prPrec i 7 (concatD [prt 0 str])
     AbsGrammar.EList exprs -> prPrec i 7 (concatD [doc (showString "["), prt 0 exprs, doc (showString "]")])
     AbsGrammar.EList1 expr1 expr2 -> prPrec i 7 (concatD [doc (showString "["), prt 0 expr1, doc (showString "]"), doc (showString "*"), prt 0 expr2])
+    AbsGrammar.ETuple exprs -> prPrec i 7 (concatD [doc (showString "("), prt 0 exprs, doc (showString ")")])
     AbsGrammar.EAt id expr -> prPrec i 7 (concatD [prt 0 id, doc (showString "["), prt 0 expr, doc (showString "]")])
     AbsGrammar.Neg expr -> prPrec i 6 (concatD [doc (showString "-"), prt 7 expr])
     AbsGrammar.Not expr -> prPrec i 6 (concatD [doc (showString "!"), prt 7 expr])

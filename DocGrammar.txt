@@ -34,8 +34,8 @@ The reserved words used in Grammar are the following:
   | ``break`` | ``const`` | ``continue`` | ``def``
   | ``else`` | ``error`` | ``false`` | ``for``
   | ``honk`` | ``if`` | ``in`` | ``lambda``
-  | ``printInt`` | ``printStr`` | ``return`` | ``to``
-  | ``true`` | ``while`` |  |
+  | ``println`` | ``return`` | ``to`` | ``true``
+  | ``while`` |  |  |
 
 The symbols used in Grammar are the following:
   | ( | ) | , | {
@@ -64,6 +64,9 @@ All other symbols are terminals.
   | //[Arg]// | -> | **eps**
   |  |  **|**  | //Arg//
   |  |  **|**  | //Arg// ``,`` //[Arg]//
+  | //[Ident]// | -> | **eps**
+  |  |  **|**  | //Ident//
+  |  |  **|**  | //Ident// ``,`` //[Ident]//
   | //Block// | -> | ``{`` //[Stmt]// ``}``
   | //[Stmt]// | -> | **eps**
   |  |  **|**  | //Stmt// //[Stmt]//
@@ -72,13 +75,10 @@ All other symbols are terminals.
   |  |  **|**  | ``const`` //Ident// ``=`` //Expr//
   |  |  **|**  | ``def`` //Ident// ``(`` //[Arg]// ``)`` //Block//
   |  |  **|**  | //Ident// ``=`` //Expr// ``;``
-  |  |  **|**  | //Ident// ``=`` ``(`` //[Expr]// ``)`` ``;``
-  |  |  **|**  | ``(`` //[Arg]// ``)`` ``=`` ``(`` //[Expr]// ``)`` ``;``
-  |  |  **|**  | ``(`` //[Arg]// ``)`` ``=`` //Expr// ``;``
+  |  |  **|**  | ``(`` //[Ident]// ``)`` ``=`` //Expr// ``;``
   |  |  **|**  | //Ident// ``++`` ``;``
   |  |  **|**  | //Ident// ``--`` ``;``
   |  |  **|**  | ``return`` //Expr// ``;``
-  |  |  **|**  | ``return`` ``(`` //[Expr]// ``)`` ``;``
   |  |  **|**  | ``return`` ``;``
   |  |  **|**  | ``if`` ``(`` //Expr// ``)`` //Stmt//
   |  |  **|**  | ``if`` ``(`` //Expr// ``)`` //Stmt// ``else`` //Stmt//
@@ -88,8 +88,7 @@ All other symbols are terminals.
   |  |  **|**  | ``break``
   |  |  **|**  | ``continue``
   |  |  **|**  | //Expr// ``;``
-  |  |  **|**  | ``printInt`` ``(`` //Expr// ``)``
-  |  |  **|**  | ``printStr`` ``(`` //Expr// ``)``
+  |  |  **|**  | ``println`` ``(`` //Expr// ``)``
   |  |  **|**  | ``honk`` ``(`` //Expr// ``)``
   |  |  **|**  | ``error`` ``(`` ``)``
   | //Expr7// | -> | //Ident//
@@ -100,6 +99,7 @@ All other symbols are terminals.
   |  |  **|**  | //String//
   |  |  **|**  | ``[`` //[Expr]// ``]``
   |  |  **|**  | ``[`` //Expr// ``]`` ``*`` //Expr//
+  |  |  **|**  | ``(`` //[Expr]// ``)``
   |  |  **|**  | //Ident// ``[`` //Expr// ``]``
   |  |  **|**  | ``(`` //Expr// ``)``
   | //Expr6// | -> | ``-`` //Expr7//

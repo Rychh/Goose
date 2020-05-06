@@ -190,6 +190,8 @@ transBlock (Block []) = do
   context <- ask
   return $ context 
 
+dupa :: Ident -> Arg
+dupa k = Arg k
    
 transStmt :: Stmt -> Interpreter Context
 transStmt x = case x of
@@ -209,24 +211,24 @@ transStmt x = case x of
     let newEnv = insert ident loc env
     return (newEnv, mode, mVal)
 
-  TupleAss ident exprs -> do
-    values <- mapM transExpr exprs
-    (env, mode, mVal) <- ask
-    newLoc <- next
-    let loc = if member ident env then env ! ident else newLoc
-    modify (\store -> insert loc (Tuple values) store)
-    let newEnv = insert ident loc env
-    return (newEnv, mode, mVal)
+  -- TupleAss ident exprs -> do
+  --   values <- mapM transExpr exprs
+  --   (env, mode, mVal) <- ask
+  --   newLoc <- next
+  --   let loc = if member ident env then env ! ident else newLoc
+  --   modify (\store -> insert loc (Tuple values) store)
+  --   let newEnv = insert ident loc env
+  --   return (newEnv, mode, mVal)
 
-  TupleAss1 args exprs -> do
-    values <- mapM transExpr exprs
-    newCont <- transArguments args values
-    return newCont
+  -- TupleAss1 args exprs -> do
+  --   values <- mapM transExpr exprs
+  --   newCont <- transArguments args values
+  --   return newCont
 
-  TupleAss2 args expr -> do
+  TupleAss idents expr -> do
     val <- transExpr expr
     case val of
-      Tuple arr -> transArguments args arr
+      Tuple arr -> transArguments     (Prelude.map dupa idents) arr
       otherwise -> throwError $ "Error: expected Tuple got: " ++ showVal val
 
   Incr ident -> transStmt $ Ass ident (EAdd (EVar ident) Plus (ELitInt 1))
@@ -239,11 +241,11 @@ transStmt x = case x of
     val <- transExpr expr
     return (env, ReturnMode, Just val)
 
-  RetTuple exprs ->  do
-    (env, mode, _) <- ask
-    checkMode mode NothingMode
-    values <- mapM transExpr exprs
-    return (env, ReturnMode, Just (Tuple values))
+  -- RetTuple exprs ->  do
+  --   (env, mode, _) <- ask
+  --   checkMode mode NothingMode
+  --   values <- mapM transExpr exprs
+  --   return (env, ReturnMode, Just (Tuple values))
 
   VRet -> transStmt $ Ret (ELitInt 0)
   
@@ -284,17 +286,17 @@ transStmt x = case x of
     _ <- transExpr expr
     return context
   
-  PrInt expr -> do
+  Print expr -> do
     val <- transExpr expr
     lift $ lift $  lift $ putStrLn $ showVal val
     context <- ask
     return context
 
-  PrStr expr ->  do
-    val <- transExpr expr
-    lift $ lift $  lift $ putStrLn $ showVal val
-    context <- ask
-    return context
+  -- PrStr expr ->  do
+  --   val <- transExpr expr
+  --   lift $ lift $  lift $ putStrLn $ showVal val
+  --   context <- ask
+  --   return context
   
   Honk expr -> failure x
   Error -> failure x
@@ -336,6 +338,10 @@ transExpr x = case x of
     case (val2) of
       (Int x) -> return $ Array (Prelude.take (fromIntegral x) (repeat val1))
       otherwise -> throwError $ "Error: expected Int got: " ++ showVal val2
+
+  ETuple exprs -> do
+    values <- mapM transExpr exprs
+    return $ Tuple $ values
 
   EAt ident expr -> do
     val <- transExpr expr

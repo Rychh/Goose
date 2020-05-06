@@ -3,9 +3,15 @@ def triple(k) {
 }
 
 def main() {
-    x = (1, 2);
-    y = triple(2);
-    (a, b, c) = (0, x[0], x[1]);
+   x = (1, 2);
+   y = triple(2);
+    (a, b) = x;
+    println(a);    
+    (a, b) = (1,2);
+    println(a);
+
     (e, d, f) =  triple(3);
+    println(e);
+
     return 0;
 }

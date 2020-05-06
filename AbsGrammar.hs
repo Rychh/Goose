@@ -24,13 +24,10 @@ data Stmt
     | DeclCon Ident Expr
     | DeclFun Ident [Arg] Block
     | Ass Ident Expr
-    | TupleAss Ident [Expr]
-    | TupleAss1 [Arg] [Expr]
-    | TupleAss2 [Arg] Expr
+    | TupleAss [Ident] Expr
     | Incr Ident
     | Decr Ident
     | Ret Expr
-    | RetTuple [Expr]
     | VRet
     | Cond Expr Stmt
     | CondElse Expr Stmt Stmt
@@ -40,8 +37,7 @@ data Stmt
     | Break
     | Conti
     | SExp Expr
-    | PrInt Expr
-    | PrStr Expr
+    | Print Expr
     | Honk Expr
     | Error
   deriving (Eq, Ord, Show, Read)
@@ -55,6 +51,7 @@ data Expr
     | EString String
     | EList [Expr]
     | EList1 Expr Expr
+    | ETuple [Expr]
     | EAt Ident Expr
     | Neg Expr
     | Not Expr
