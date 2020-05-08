@@ -1,8 +1,13 @@
+def foo(const a, b) {
+  b = 5;
+  return 0;
+}
+
 
 def main() {
-  tab = [1,2,3,4];
-  tab2 = ["DSAD"] * 5;
-  printInt(tab[0]);
-  printInt(tab2[2]);
+  i = 2;
+  k = [1,2];
+  foo(1,k);
+  println(k);
   return 0;
 }

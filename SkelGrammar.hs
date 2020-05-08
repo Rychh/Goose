@@ -26,7 +26,7 @@ data Mode = NothingMode
   deriving (Show, Eq)
 
 type Store = Map Location Value
-type Env = Map Ident Location
+type Env = Map Ident (Location, Bool)
 
 type Context = (Env, Mode, Maybe Value)
 
@@ -43,15 +43,8 @@ showVal (Bool b)
   | otherwise = "false"
 showVal (String s) = s
 showVal (Fun f) = "function"
-
-failure :: Stmt -> Interpreter Context
-failure x = do
-  context <- ask
-  lift $ lift $ lift $ putStrLn "Cos zapomniales zaimplementowac" -- todo xd czemu tyle liftów
-  return $ context
--- transIdent :: Ident -> Interpreter 
--- transIdent x = case x of
---   Ident string -> failure x
+showVal (Array arr) = "Array: " ++ "[" ++ Prelude.foldr (\x b-> showVal x ++ "," ++ b) "]" arr
+showVal (Tuple tpl) = "Tuple:"  ++ "(" ++ Prelude.foldr (\x b-> showVal x ++ "," ++ b) ")" tpl
 
 checkMode :: Mode -> Mode -> Interpreter ()
 checkMode mode expected =
@@ -111,7 +104,7 @@ getFun :: Ident -> Interpreter Fun
 getFun funName = do
   store <- get
   (env, mode, mVal) <- ask
-  let (Fun f) = store ! (env ! funName)
+  let (Fun f) = store ! (fst $ env ! funName)
   put store
   return $ f
   -- case ()  of
@@ -119,12 +112,12 @@ getFun funName = do
   --   _ -> return $ fst context ! funName
 
 setFun :: Ident -> Fun -> Context -> Interpreter Context
-setFun ident fun (env, mode, mVal) = do
-  newLoc <- next
-  let loc = if member ident env then env ! ident else newLoc
-  modify (\store -> insert loc (Fun fun) store)
-  let newEnv = insert ident loc env
-  return $ (newEnv, mode, mVal)
+setFun ident fun context = local (const context) $ assignValue ident (Fun fun) False False
+  -- newLoc <- next
+  -- let loc = if member ident env then env ! ident else newLoc
+  -- modify (\store -> insert loc (Fun fun) store)
+  -- let newEnv = insert ident loc env
+  -- return $ (newEnv, mode, mVal)
 
 runFun :: Ident -> [Expr] -> Interpreter Value
 runFun ident exprs = do
@@ -133,6 +126,18 @@ runFun ident exprs = do
   args <- mapM transExpr exprs
   value <- local (const context) $ fun args
   return value
+
+assignValue :: Ident -> Value -> Bool -> Bool -> Interpreter Context
+assignValue ident val const argType =  do
+  (env, mode, mVal) <- ask
+  if not argType && member ident env && (snd $ env ! ident) then
+    throwError $ "Error: " ++ show ident ++ " is a const type."
+  else do
+    newLoc <- next
+    let loc = if not argType && member ident env then fst $ env ! ident else newLoc
+    modify (\store -> insert loc val store)
+    let newEnv = insert ident (loc, const) env
+    return (newEnv, mode, mVal)
 
 next :: Interpreter Location
 next = do
@@ -148,25 +153,11 @@ transArguments (var:vars) (val:vals) = do
   newCont1 <- transArgument var val
   newCont2 <- local (const newCont1) $ transArguments vars vals -- todo co robi to const?
   return newCont2
-  -- loc <- alloc
-  -- modify (\store -> insert loc val store)
-  -- env' <- local (transArgument var val) $ transArguments
-
-
 
 transArgument :: Arg -> Value-> Interpreter Context
 transArgument var val = case var of
-  Arg ident -> do
-    loc <- next
-    modify (\store -> insert loc val store)
-    (env, mode, mVal) <- ask
-    let newEnv = insert ident loc env
-    return (newEnv, mode, mVal)
-
-  CntsArg ident -> do
-    lift $ lift $ lift $ putStrLn "TODO, nie zapomnij dodac constow" -- todo xd czemu tyle liftów
-    newCont <- transArgument (Arg ident) val
-    return newCont
+  Arg ident -> assignValue ident val False True
+  CntsArg ident -> assignValue ident val True True
  
 transBlock :: Block -> Interpreter Context
 transBlock (Block (stmt:stmts)) = do
@@ -190,45 +181,33 @@ transBlock (Block []) = do
   context <- ask
   return $ context 
 
-dupa :: Ident -> Arg
-dupa k = Arg k
+identToArg :: Ident -> Arg
+identToArg k = Arg k
    
 transStmt :: Stmt -> Interpreter Context
 transStmt x = case x of
   Empty -> do
     context <- ask
     return context
+
   BStmt block -> transBlock block
-  DeclCon ident expr -> failure x
+
   DeclFun ident args block -> createAndSetFun ident args block
 
-  Ass ident expr -> do -- todo dodać czysczenie pamieci
+  Ass ident expr -> do
     val <- transExpr expr
-    (env, mode, mVal) <- ask
-    newLoc <- next
-    let loc = if member ident env then env ! ident else newLoc
-    modify (\store -> insert loc val store)
-    let newEnv = insert ident loc env
-    return (newEnv, mode, mVal)
-
-  -- TupleAss ident exprs -> do
-  --   values <- mapM transExpr exprs
-  --   (env, mode, mVal) <- ask
-  --   newLoc <- next
-  --   let loc = if member ident env then env ! ident else newLoc
-  --   modify (\store -> insert loc (Tuple values) store)
-  --   let newEnv = insert ident loc env
-  --   return (newEnv, mode, mVal)
-
-  -- TupleAss1 args exprs -> do
-  --   values <- mapM transExpr exprs
-  --   newCont <- transArguments args values
-  --   return newCont
-
+    newCont <- assignValue ident val False False
+    return newCont
+  
+  DeclCon ident expr ->  do
+    val <- transExpr expr
+    newCont <- assignValue ident val True False
+    return newCont
+  
   TupleAss idents expr -> do
     val <- transExpr expr
     case val of
-      Tuple arr -> transArguments     (Prelude.map dupa idents) arr
+      Tuple arr -> transArguments     (Prelude.map identToArg idents) arr
       otherwise -> throwError $ "Error: expected Tuple got: " ++ showVal val
 
   Incr ident -> transStmt $ Ass ident (EAdd (EVar ident) Plus (ELitInt 1))
@@ -240,12 +219,6 @@ transStmt x = case x of
     checkMode mode NothingMode
     val <- transExpr expr
     return (env, ReturnMode, Just val)
-
-  -- RetTuple exprs ->  do
-  --   (env, mode, _) <- ask
-  --   checkMode mode NothingMode
-  --   values <- mapM transExpr exprs
-  --   return (env, ReturnMode, Just (Tuple values))
 
   VRet -> transStmt $ Ret (ELitInt 0)
   
@@ -268,7 +241,6 @@ transStmt x = case x of
   
   For ident expr1 expr2 stmt -> transBlock (Block [Ass ident expr1, Incr ident, While (ERel (EVar ident) LTH expr2) (BStmt $ Block [stmt, Incr ident])])
 
-  ForIn ident1 ident2 stmt -> failure x
   Break -> do
     (env, mode, mVal) <- ask
     case mode of
@@ -291,15 +263,13 @@ transStmt x = case x of
     lift $ lift $  lift $ putStrLn $ showVal val
     context <- ask
     return context
-
-  -- PrStr expr ->  do
-  --   val <- transExpr expr
-  --   lift $ lift $  lift $ putStrLn $ showVal val
-  --   context <- ask
-  --   return context
   
-  Honk expr -> failure x
-  Error -> failure x
+  Honk expr -> do
+    val <- transExpr expr
+    context <- transStmt $ Print (EString $ "Honk: " ++ showVal val)
+    return context
+
+  Error -> throwError $ "Error from error()"
 
 transExprHlp :: Expr -> Expr -> (Value -> Value-> Interpreter Value) -> Interpreter Value
 transExprHlp expr1 expr2 op = do
@@ -316,7 +286,7 @@ transExpr x = case x of
     if not (member ident env) then
       throwError $ "Variable not initialized: " ++ show ident
     else
-      return $ store ! (env ! ident)
+      return $ store ! (fst $ env ! ident)
 
   ELitInt integer -> return $ Int $ integer
   
