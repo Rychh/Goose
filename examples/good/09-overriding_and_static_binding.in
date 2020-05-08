@@ -1,0 +1,40 @@
+def foo_out () {
+    x = "foo_out";
+}
+
+def bar_out (x) {
+    x = "bar_out";
+}
+
+def main() {
+    x = "main";
+
+    def foo_in () {
+        x = "foo_in";
+    }
+
+    def bar_in (x) {
+        x = "bar_in";
+    }
+
+    println(x);
+
+    foo_out();
+    println(x);
+    x = "main";
+
+    
+    bar_out(x);
+    println(x);
+    x = "main";
+    
+    foo_in();
+    println(x);
+    x = "main";
+
+    bar_in(x);
+    println(x);
+    x = "main";
+    
+    return 0;
+}

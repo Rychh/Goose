@@ -1,0 +1,27 @@
+def foo_arr() {
+    return [6,7,8,9,10];
+}
+
+def foo_tpl() {
+    return (6,7,8,9,10);
+}
+
+
+def main () {
+    array = [1, true, "string"];
+    tuple = (2, false, array);
+    
+    println(array);
+    println(array[0]);
+    println(foo_arr());
+
+    println(tuple);
+    println(tuple[0]);
+    println(foo_tpl());
+
+    (a, b, c) = tuple;
+    (d, e) = ("fst", "snd");
+    println ([a,b,c,d,e]);
+
+    return 0;
+}

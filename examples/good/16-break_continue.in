@@ -1,0 +1,34 @@
+def main () {
+    x = 0;
+    y = 0;
+    while (true) {
+        y = x + 100;
+        println(x);
+        while(true) {
+            y--;
+            if (y <= 100) {
+                break;
+            }
+
+            if (y%2 == 0) {
+                continue;
+            }
+
+            println(y);
+        }
+        
+        if (x == 4) {
+            break;
+        }
+
+        x++;
+
+        if (x%2 == 0) {
+                continue;
+            }
+            
+        println("####");
+    }
+
+    return 0;
+}

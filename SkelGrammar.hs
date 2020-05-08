@@ -112,7 +112,7 @@ getFun funName = do
   --   _ -> return $ fst context ! funName
 
 setFun :: Ident -> Fun -> Context -> Interpreter Context
-setFun ident fun context = local (const context) $ assignValue ident (Fun fun) False False
+setFun ident fun context = local (const context) $ assignValue ident (Value fun) False False
   -- newLoc <- next
   -- let loc = if member ident env then env ! ident else newLoc
   -- modify (\store -> insert loc (Fun fun) store)

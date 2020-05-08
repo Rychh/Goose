@@ -1,0 +1,23 @@
+
+def bar (a,b,c) {
+  return a + " " + b + " " + a + " " + c + " " + a;
+}
+
+def main () {
+  x = 1;
+
+  def foo() {
+    x++;
+    return x % 2 == 0 ;
+  }
+
+  foo();
+  f = foo();
+
+  while (foo()) {
+    println(bar("ala","ma", "kota"));
+  }
+
+  
+  return  ;
+}

@@ -1,0 +1,14 @@
+
+def foo(a) {
+    b = 7;
+    def bar(x) {
+        return a * b * x; 
+    }
+    return bar;
+}
+
+def main () {
+  k = foo(5);
+  println(k(2));
+  return  ;
+}

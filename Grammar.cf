@@ -14,7 +14,7 @@ FnDef.	   TopDef ::= "def" Ident "(" [Arg] ")" Block ;
 
 separator nonempty TopDef "" ;
 
-Arg. 	     Arg ::= Ident;
+Arg. 	   Arg ::= Ident;
 
 CntsArg.   Arg ::= "const" Ident;
 
