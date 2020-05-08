@@ -1,0 +1,13 @@
+def main() {
+    a = 1;
+    b = true;
+    c = "Abc";
+    d = [1, 2, 3];
+    e = (true, "b", 3);
+    println("Before assigment a is equal");
+    println(a);
+    a = d;
+    println("After 'a = d' a is egual");
+    println(a);
+    return 0;
+}

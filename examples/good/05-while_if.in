@@ -1,0 +1,25 @@
+// This code is from 01-types.in
+
+def main() {
+    a = 1;
+    b = true;
+    c = "Abc";
+    d = [1, 2, 3];
+    e = (true, "b", 3);
+
+    i = 3;
+    while (i > 0) {
+        println("\nValue of i");
+        println(i);
+
+        if (i % 2 == 0) {
+            println("i % 2 == 0");
+        } else {
+            println("i % 2 == 0");
+        }
+
+        i--;
+    }
+
+    return 0;
+}

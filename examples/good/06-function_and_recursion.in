@@ -1,0 +1,26 @@
+def fact (n) {
+    i = 1 ;
+    r = 1 ;
+    while (i < n+1) {
+        r = r * i ;
+        i = i + 1 ;
+    }
+    return r ;
+}
+
+def factr (n) {
+    if (n < 2) 
+        return 1 ;
+    else 
+        return (n * factr(n-1)) ;
+}
+
+def main () {
+    println("factorial in two ways");
+    
+    println("iteratively");
+    println(fact(7)) ;
+    println("recursively");
+    println(factr(7)) ;
+    return 0 ;
+}

@@ -1,0 +1,13 @@
+
+def main() {
+    a = 1;
+    b = true;
+    c = "Abc";
+    d = [1, 2, 3];
+    e = (true, "b", 3);
+    println("The value of 'a > 0' is equal");
+    println(a > 0);
+    println("The value of 'b && d[2] == a' is equal");
+    println(b && d[2] == a);
+    return 0;
+}

@@ -1,0 +1,90 @@
+def fact (n) {
+    i = 1 ;
+    r = 1 ;
+    while (i < n+1) {
+        r = r * i ;
+        i = i + 1 ;
+    }
+    return r ;
+}
+
+def factr (n) {
+    if (n < 2) 
+        return 1 ;
+    else 
+        return (n * factr(n-1)) ;
+}
+
+def const_example(a, const b) {
+    a++;
+    // b++; //error
+    return 0;
+}
+
+
+def main() {
+    a = 1;
+    b = true;
+    c = "Abc";
+    d = [1, 2, 3];
+    e = (true, "b", 3);
+    println("\n\n 01/04 \n");
+
+    println("Example of Int:");
+    println(a);
+    println("Example of Bool:");
+    println(b);
+    println("Example of String:");
+    println(c);
+    println("Example of Array:");
+    println(d);
+    println("Example of Tuple:");
+    println(e);
+
+    println("\n\n 02\n");
+
+    println("The value of 'a > 0' is equal");
+    println(a > 0);
+    println("The value of 'b && d[2] == a' is equal");
+    println(b && d[2] == a);
+
+    println("\n\n 03\n");
+
+    println("Before assigment a is equal");
+    println(a);
+    a = d;
+    println("After 'a = d' a is egual");
+    println(a);
+
+    println("\n\n 05\n");
+
+    i = 3;
+    while (i > 0) {
+        println("\nValue of i");
+        println(i);
+
+        if (i % 2 == 0) {
+            println("i % 2 == 0");
+        } else {
+            println("i % 2 == 0");
+        }
+
+        i--;
+    }
+
+    println("\n\n 06\n");
+
+    println("factorial in two ways");
+    
+    println("iteratively");
+    println(fact(7)) ;
+    println("recursively");
+    println(factr(7)) ;
+
+    // 08 Example
+
+    const f = "const";
+    // f = f + " doesn't work"; // error 
+    
+    return 0;
+}

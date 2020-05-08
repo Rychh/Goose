@@ -1,0 +1,20 @@
+
+def main() {
+    a = 1;
+    b = true;
+    c = "Abc";
+    d = [1, 2, 3];
+    e = (true, "b", 3);
+    println("Example of Int:");
+    println(a);
+    println("Example of Bool:");
+    println(b);
+    println("Example of String:");
+    println(c);
+    println("Example of Array:");
+    println(d);
+    println("Example of Tuple:");
+    println(e);
+
+    return 0;
+}
