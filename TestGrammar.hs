@@ -69,12 +69,10 @@ usage = do
 
 main :: IO ()
 main = do
-  let v = 2
+  let v = 1
   args <- getArgs
   input <- case args of
-    -- ["--help"] -> usage
     [] -> getContents
-    -- "-s":fs -> mapM_ (runFile 0 pProgram) fs
     (file:_) -> readFile file
   case pProgram (myLexer input) of
     Ok tree -> do
@@ -82,7 +80,8 @@ main = do
       showTree v tree
       putStrV v "Interpretowanko ."
       res <- runExceptT $ interpret tree
-      putStrV v "Honk:"
-      putStrLn $ show res
-      exitSuccess
+      case res of
+        (Left e) -> putStrV 2  e
+        _ -> exitSuccess
+    (Bad s) -> putStrV 2 s
 

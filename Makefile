@@ -6,7 +6,7 @@
 
 # Default goal.
 
-all : TestGrammar
+all : interpreter
 
 # Rules for building the parser.
 
@@ -19,7 +19,7 @@ ErrM.hs LexGrammar.x PrintGrammar.hs ParGrammar.y TestGrammar.hs : Grammar.cf
 %.hs : %.x
 	alex --ghc $<
 
-TestGrammar : TestGrammar.hs ErrM.hs LexGrammar.hs ParGrammar.hs PrintGrammar.hs SkelGrammar.hs
+interpreter : TestGrammar.hs ErrM.hs LexGrammar.hs ParGrammar.hs PrintGrammar.hs SkelGrammar.hs
 	ghc --make $< -o $@
 
 # Rules for cleaning generated files.

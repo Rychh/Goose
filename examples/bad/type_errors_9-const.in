@@ -1,0 +1,13 @@
+// from 08-read_only.in
+
+def const_example(a, const b) {
+    a++;
+    // b++; //error
+    return 0;
+}
+
+def main () {
+    const f = "const";
+    f = f + " doesn't work"; // error 
+    return 0;
+}
