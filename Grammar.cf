@@ -55,8 +55,6 @@ While.     Stmt ::= "while" "(" Expr ")" Stmt ;
 
 For.       Stmt ::= "for" "(" Ident "=" Expr "to" Expr ")" Stmt ;
 
-ForIn.     Stmt ::= "for" "(" Ident "in" Ident ")" Stmt ;
-
 Break.     Stmt ::= "break" ;
 
 Conti.     Stmt ::= "continue" ;

@@ -33,9 +33,8 @@ The set of reserved words is the set of terminals appearing in the grammar. Thos
 The reserved words used in Grammar are the following:
   | ``break`` | ``const`` | ``continue`` | ``def``
   | ``else`` | ``error`` | ``false`` | ``for``
-  | ``honk`` | ``if`` | ``in`` | ``lambda``
-  | ``println`` | ``return`` | ``to`` | ``true``
-  | ``while`` |  |  |
+  | ``honk`` | ``if`` | ``lambda`` | ``println``
+  | ``return`` | ``to`` | ``true`` | ``while``
 
 The symbols used in Grammar are the following:
   | ( | ) | , | {
@@ -84,7 +83,6 @@ All other symbols are terminals.
   |  |  **|**  | ``if`` ``(`` //Expr// ``)`` //Stmt// ``else`` //Stmt//
   |  |  **|**  | ``while`` ``(`` //Expr// ``)`` //Stmt//
   |  |  **|**  | ``for`` ``(`` //Ident// ``=`` //Expr// ``to`` //Expr// ``)`` //Stmt//
-  |  |  **|**  | ``for`` ``(`` //Ident// ``in`` //Ident// ``)`` //Stmt//
   |  |  **|**  | ``break``
   |  |  **|**  | ``continue``
   |  |  **|**  | //Expr// ``;``

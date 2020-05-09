@@ -47,16 +47,15 @@ import ErrM
   'for' { PT _ (TS _ 32) }
   'honk' { PT _ (TS _ 33) }
   'if' { PT _ (TS _ 34) }
-  'in' { PT _ (TS _ 35) }
-  'lambda' { PT _ (TS _ 36) }
-  'println' { PT _ (TS _ 37) }
-  'return' { PT _ (TS _ 38) }
-  'to' { PT _ (TS _ 39) }
-  'true' { PT _ (TS _ 40) }
-  'while' { PT _ (TS _ 41) }
-  '{' { PT _ (TS _ 42) }
-  '||' { PT _ (TS _ 43) }
-  '}' { PT _ (TS _ 44) }
+  'lambda' { PT _ (TS _ 35) }
+  'println' { PT _ (TS _ 36) }
+  'return' { PT _ (TS _ 37) }
+  'to' { PT _ (TS _ 38) }
+  'true' { PT _ (TS _ 39) }
+  'while' { PT _ (TS _ 40) }
+  '{' { PT _ (TS _ 41) }
+  '||' { PT _ (TS _ 42) }
+  '}' { PT _ (TS _ 43) }
   L_ident  { PT _ (TV $$) }
   L_integ  { PT _ (TI $$) }
   L_quoted { PT _ (TL $$) }
@@ -108,7 +107,6 @@ Stmt : ';' { AbsGrammar.Empty }
      | 'if' '(' Expr ')' Stmt 'else' Stmt { AbsGrammar.CondElse $3 $5 $7 }
      | 'while' '(' Expr ')' Stmt { AbsGrammar.While $3 $5 }
      | 'for' '(' Ident '=' Expr 'to' Expr ')' Stmt { AbsGrammar.For $3 $5 $7 $9 }
-     | 'for' '(' Ident 'in' Ident ')' Stmt { AbsGrammar.ForIn $3 $5 $7 }
      | 'break' { AbsGrammar.Break }
      | 'continue' { AbsGrammar.Conti }
      | Expr ';' { AbsGrammar.SExp $1 }

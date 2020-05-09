@@ -33,7 +33,6 @@ data Stmt
     | CondElse Expr Stmt Stmt
     | While Expr Stmt
     | For Ident Expr Expr Stmt
-    | ForIn Ident Ident Stmt
     | Break
     | Conti
     | SExp Expr

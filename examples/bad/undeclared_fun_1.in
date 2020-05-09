@@ -1,0 +1,5 @@
+def main() {
+    x = 10;
+    println( fun(x) );
+    return 0;
+}

@@ -144,7 +144,6 @@ instance Print AbsGrammar.Stmt where
     AbsGrammar.CondElse expr stmt1 stmt2 -> prPrec i 0 (concatD [doc (showString "if"), doc (showString "("), prt 0 expr, doc (showString ")"), prt 0 stmt1, doc (showString "else"), prt 0 stmt2])
     AbsGrammar.While expr stmt -> prPrec i 0 (concatD [doc (showString "while"), doc (showString "("), prt 0 expr, doc (showString ")"), prt 0 stmt])
     AbsGrammar.For id expr1 expr2 stmt -> prPrec i 0 (concatD [doc (showString "for"), doc (showString "("), prt 0 id, doc (showString "="), prt 0 expr1, doc (showString "to"), prt 0 expr2, doc (showString ")"), prt 0 stmt])
-    AbsGrammar.ForIn id1 id2 stmt -> prPrec i 0 (concatD [doc (showString "for"), doc (showString "("), prt 0 id1, doc (showString "in"), prt 0 id2, doc (showString ")"), prt 0 stmt])
     AbsGrammar.Break -> prPrec i 0 (concatD [doc (showString "break")])
     AbsGrammar.Conti -> prPrec i 0 (concatD [doc (showString "continue")])
     AbsGrammar.SExp expr -> prPrec i 0 (concatD [prt 0 expr, doc (showString ";")])

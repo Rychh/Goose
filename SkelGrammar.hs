@@ -102,17 +102,13 @@ createLambda context args block values = do
 
 getFun :: Ident -> Interpreter Fun
 getFun funName = do
-  store <- get
-  (env, mode, mVal) <- ask
-  let (Fun f) = store ! (fst $ env ! funName)
-  put store
-  return $ f
-  -- case ()  of
-  --   Fun f -> return $ f
-  --   _ -> return $ fst context ! funName
+  val <- transExpr (EVar funName)
+  case val of
+    (Fun f) -> return f
+    otherwise -> throwError $ "Error: expected Fun got: " ++ showVal val
 
 setFun :: Ident -> Fun -> Context -> Interpreter Context
-setFun ident fun context = local (const context) $ assignValue ident (Value fun) False False
+setFun ident fun context = local (const context) $ assignValue ident (Fun fun) False False
   -- newLoc <- next
   -- let loc = if member ident env then env ! ident else newLoc
   -- modify (\store -> insert loc (Fun fun) store)
