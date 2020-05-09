@@ -239,7 +239,6 @@ transStmt x = case x of
       (NothingMode, Bool True) -> transBlock (Block [stmt, While expr stmt])
       (_, Bool _) -> return (env, mode, mVal) 
       otherwise -> throwError $ "Error: in While conditions expected Bool got: " ++ showVal val
-
   
   For ident expr1 expr2 stmt -> transBlock (Block [Ass ident expr1, Incr ident, While (ERel (EVar ident) LTH expr2) (BStmt $ Block [stmt, Incr ident])])
 
@@ -319,8 +318,14 @@ transExpr x = case x of
     val <- transExpr expr
     var <- transExpr (EVar ident)
     case (var, val) of
-      (Array arr, Int i) -> return $ arr !! (fromIntegral i)
-      (Tuple values, Int i) -> return $ values !! (fromIntegral i)
+      (Array arr, Int i) -> if (fromIntegral i) < (length arr) then 
+          return $ arr !! (fromIntegral i)
+        else 
+          throwError $ "Error: index out of range" 
+      (Tuple values, Int i) -> if (fromIntegral i) < (length values) then 
+          return $ values !! (fromIntegral i)
+        else 
+          throwError $ "Error:index out of range"
       (Array _, _) ->  throwError $ "Error: expected Int got: " ++ showVal val
       (Tuple _, _) ->  throwError $ "Error: expected Int got: " ++ showVal val
       otherwise -> throwError $ "Invalid variable"
