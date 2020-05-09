@@ -145,6 +145,8 @@ next = do
 
 transArguments :: [Arg] -> [Value]-> Interpreter Context
 transArguments [] [] = ask
+transArguments [] _ = throwError $ "Error: Too many arguments"
+transArguments _ [] = throwError $ "Error: Not enough arguments"
 transArguments (var:vars) (val:vals) = do
   newCont1 <- transArgument var val
   newCont2 <- local (const newCont1) $ transArguments vars vals -- todo co robi to const?

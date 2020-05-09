@@ -1,0 +1,9 @@
+
+def foo(a, b, c) {
+    return "foo";
+}
+
+def main() {
+    foo(1,2);
+    return 0;
+}
