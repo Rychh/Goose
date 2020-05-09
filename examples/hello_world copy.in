@@ -1,6 +1,0 @@
-// Hello world 
-
-def main () {
-  printStr("hello world") ;
-  return 0 ;
-}
