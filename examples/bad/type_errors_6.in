@@ -1,0 +1,8 @@
+
+def main() {
+    i = 5;
+    while(i) {
+        println(i);
+    }
+    return 0;
+}

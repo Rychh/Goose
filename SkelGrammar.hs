@@ -37,12 +37,12 @@ type Interpreter a = StateT Store (ReaderT Context Result) a
 -- + 08 (zmienne read-only i pętla for)
 
 showVal :: Value -> String
-showVal (Int i) = show i
+showVal (Int i) = "Int:" ++ show i
 showVal (Bool b) 
-  | b = "true"
-  | otherwise = "false"
-showVal (String s) = s
-showVal (Fun f) = "function"
+  | b = "Bool: true"
+  | otherwise = "Boool: false"
+showVal (String s) = "String: '" ++ s ++ "'"
+showVal (Fun f) = "Function"
 showVal (Array arr) = "Array: " ++ "[" ++ Prelude.foldr (\x b-> showVal x ++ "," ++ b) "]" arr
 showVal (Tuple tpl) = "Tuple:"  ++ "(" ++ Prelude.foldr (\x b-> showVal x ++ "," ++ b) ")" tpl
 
@@ -223,9 +223,11 @@ transStmt x = case x of
   Cond expr stmt -> transStmt (CondElse expr stmt Empty)
   
   CondElse expr stmt1 stmt2 -> do
-    (Bool b) <- transExpr expr
-    newCont <- if b then transStmt stmt1 else transStmt stmt2
-    return newCont
+    val <- transExpr expr
+    case val of
+      (Bool True) -> transStmt stmt1
+      (Bool False) -> transStmt stmt2 
+      otherwise -> throwError $ "Error: in If conditions expected Bool got: " ++ showVal val
 
   While expr stmt -> do
     (env, mode, mVal) <- ask
@@ -235,7 +237,9 @@ transStmt x = case x of
       (ContinueMode, Bool True) -> local (const (env, NothingMode, mVal)) $ transBlock (Block [stmt, While expr stmt])
       (ContinueMode, Bool False) -> return (env, NothingMode, mVal)  
       (NothingMode, Bool True) -> transBlock (Block [stmt, While expr stmt])
-      otherwise -> return (env, mode, mVal) 
+      (_, Bool _) -> return (env, mode, mVal) 
+      otherwise -> throwError $ "Error: in While conditions expected Bool got: " ++ showVal val
+
   
   For ident expr1 expr2 stmt -> transBlock (Block [Ass ident expr1, Incr ident, While (ERel (EVar ident) LTH expr2) (BStmt $ Block [stmt, Incr ident])])
 

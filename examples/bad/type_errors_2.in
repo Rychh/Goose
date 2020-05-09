@@ -1,0 +1,8 @@
+def foo() {
+    return 0;
+}
+
+def main() {
+    a = 42 / foo;
+    return 0;
+}

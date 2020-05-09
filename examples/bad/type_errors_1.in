@@ -1,0 +1,5 @@
+
+def main() {
+    a = "string" + true;
+    return 0;
+}
